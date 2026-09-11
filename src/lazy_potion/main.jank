@@ -1,0 +1,4 @@
+(ns lazy-potion.main)
+
+(defn -main [& args]
+  (println "Hello, world!"))
