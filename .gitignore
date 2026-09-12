@@ -1,7 +1,13 @@
 .clj-kondo
 .lsp
 .calva
-
+.cpcache
 .jank-repl-history
 .nrepl-port
-target
+target*
+
+# pseudo deps.edn
+.libs
+wherejank.edn
+
+compile_flags.txt
