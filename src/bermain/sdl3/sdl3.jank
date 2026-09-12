@@ -1,0 +1,94 @@
+(ns bermain.sdl3.sdl3
+  (:include
+   "SDL3/SDL.h"
+   "SDL3_image/SDL_image.h")
+  (:require
+   [bermain.sdl3.common :refer [must-be-true must-be-some]]
+   [bermain.sdl3.sdl3-input :as input]
+   [bermain.sdl3.time :as time]))
+
+; following https://www.youtube.com/watch?v=Wu2g-N5Z78Y
+
+(declare poll-events advance cleanup)
+
+(defn main []
+  (must-be-true (cpp/SDL_Init (bit-or cpp/SDL_INIT_VIDEO cpp/SDL_INIT_GAMEPAD)) nil)
+
+  (let [main-scale   (cpp/SDL_GetDisplayContentScale (cpp/SDL_GetPrimaryDisplay))
+        window-flags (bit-or cpp/SDL_WINDOW_RESIZABLE cpp/SDL_WINDOW_HIDDEN cpp/SDL_WINDOW_HIGH_PIXEL_DENSITY)
+        width        (int (* 640 main-scale))
+        height       (int (* 360 main-scale))
+        game         {}
+        sdl-window   (must-be-some
+                      (cpp/SDL_CreateWindow "Hello again jank + sdl3!" width height window-flags)
+                      #_or (cleanup game))
+        game         (assoc game :sdl-window (cpp/box sdl-window))
+        sdl-renderer (must-be-some
+                      (cpp/SDL_CreateRenderer sdl-window cpp/nullptr)
+                      #_or (cleanup game))
+        numkeys      (cpp/int)
+        kb-state     (cpp/SDL_GetKeyboardState (cpp/& numkeys))
+        game         (assoc game
+                            :sdl-renderer (cpp/box sdl-renderer)
+                            :kb-state     (cpp/box kb-state))]
+    (cpp/SDL_SetWindowPosition sdl-window cpp/SDL_WINDOWPOS_CENTERED cpp/SDL_WINDOWPOS_CENTERED)
+    (cpp/SDL_SetWindowAlwaysOnTop sdl-window true)
+    (cpp/SDL_ShowWindow sdl-window)
+
+    (let [logical-w 640
+          logical-h 360]
+      (cpp/SDL_SetRenderLogicalPresentation sdl-renderer logical-w logical-h cpp/SDL_LOGICAL_PRESENTATION_LETTERBOX))
+
+    (let [potion-tex (doto (cpp/IMG_LoadTexture sdl-renderer "res/potion.png")
+                      (cpp/SDL_SetTextureScaleMode cpp/SDL_SCALEMODE_NEAREST))]
+      (loop [game (-> game
+                      (time/init)
+                      (assoc :player {:x 16.0 :y 16.0}))]
+        (when-not (::end? game)
+          (let [total    (/ (cpp/SDL_GetTicks) 1000.0)
+                delta    (- total (::time/total game))
+                game'    (-> (poll-events game)
+                             (time/update-time total delta)
+                             (advance))
+                player   (:player game')
+                src-rect (cpp/SDL_FRect 0.0 0.0 60.0 67.0)
+                dst-rest (cpp/SDL_FRect (:x player) (:y player) 60.0 67.0)]
+            (cpp/SDL_SetRenderDrawColor sdl-renderer 25 25 32 255)
+            (cpp/SDL_RenderClear sdl-renderer)
+
+            (cpp/SDL_RenderTexture sdl-renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))
+
+            (cpp/SDL_RenderPresent sdl-renderer)
+            (recur game'))))
+
+      (cpp/SDL_DestroyTexture potion-tex))
+
+    (cleanup game)))
+
+(defn poll-events [game]
+  (let [event (cpp/SDL_Event)]
+    (loop [game' game]
+      (if (cpp/SDL_PollEvent (cpp/& event))
+        ;; from https://wiki.libsdl.org/SDL3/SDL_Event
+        ;; Uint32 type; /**< Event type, shared with all events, Uint32 to cover user events which are not in the SDL_EventType enumeration */
+        (let [event-type (cpp/unsafe-cast cpp/SDL_EventType (.-type event))]
+          (cond
+            (or (cpp/== event-type cpp/SDL_EVENT_QUIT)
+                (-> game ::input/pressed? ::input/esc)
+                (cpp/== event-type cpp/SDL_EVENT_WINDOW_CLOSE_REQUESTED))
+            (recur (assoc game' ::end? true))
+
+            :else (recur game')))
+        (input/process-input game')))))
+
+(defn advance [{::time/keys [delta] :as game}]
+  (let [move     (* 128 delta)
+        pressed? (::input/pressed? game)]
+    (cond-> game
+      (::input/a pressed?) (update-in [:player :x] - move)
+      (::input/d pressed?) (update-in [:player :x] + move))))
+
+(defn cleanup [{:keys [sdl-renderer sdl-window]}]
+  (when sdl-renderer (cpp/SDL_DestroyRenderer (cpp/unbox (:* cpp/SDL_Renderer) sdl-renderer)))
+  (when sdl-window (cpp/SDL_DestroyWindow (cpp/unbox (:* cpp/SDL_Window) sdl-window)))
+  (cpp/SDL_Quit))

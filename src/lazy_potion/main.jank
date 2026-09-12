@@ -1,4 +1,5 @@
-(ns lazy-potion.main)
+(ns lazy-potion.main
+  (:require [bermain.sdl3.sdl3 :as sdl3]))
 
-(defn -main [& args]
-  (println "Hello, world!"))
+(defn -main [& _]
+  (sdl3/main))

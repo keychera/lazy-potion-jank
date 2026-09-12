@@ -1,0 +1,17 @@
+(ns bermain.sdl3.sdl3-input)
+
+(def keyname->scancode
+  {::esc cpp/SDL_SCANCODE_ESCAPE
+   ::a   cpp/SDL_SCANCODE_A
+   ::d   cpp/SDL_SCANCODE_D})
+
+(defn process-input [{:keys [kb-state] :as prev-game}]
+  (let [kb-state (cpp/unbox (:* (:const cpp/bool)) kb-state)
+        game     (assoc prev-game ::pressed? #{})]
+    (reduce-kv
+     (fn [game' keyname scancode]
+       (if (cpp/aget kb-state (cpp/int scancode))
+         (update game ::pressed? conj keyname)
+         game'))
+     game keyname->scancode)))
+

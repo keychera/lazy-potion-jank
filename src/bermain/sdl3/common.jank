@@ -1,0 +1,23 @@
+(ns bermain.sdl3.common)
+
+(defn throw-sdl-error [msg]
+  (let [sdl-error (cpp/cast cpp/std.string (cpp/SDL_GetError))
+        err-msg   (str "[sdl3 error]" msg ", error from sdl:" sdl-error)]
+    (cpp/SDL_ShowSimpleMessageBox cpp/SDL_MESSAGEBOX_ERROR "Error" err-msg cpp/nullptr)
+    (throw (ex-info msg {} {:data sdl-error}))))
+
+(defmacro must-be-true
+  [form callback]
+  (let [first-sym (str (first form))]
+    `(when (not ~form)
+       ~callback
+       (throw-sdl-error (str "Error on " ~first-sym)))))
+
+(defmacro must-be-some
+  [form callback]
+  (let [first-sym (str (first form))]
+    `(let [ret# ~form]
+       (when (cpp/== cpp/nullptr ret#)
+         ~callback
+         (throw-sdl-error (str "Error on " ~first-sym)))
+       ret#)))
