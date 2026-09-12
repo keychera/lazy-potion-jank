@@ -14,10 +14,10 @@
        (throw-sdl-error (str "Error on " ~first-sym)))))
 
 (defmacro must-be-some
-  [form callback]
+  [form & callback]
   (let [first-sym (str (first form))]
     `(let [ret# ~form]
        (when (cpp/== cpp/nullptr ret#)
-         ~callback
+         ~@callback
          (throw-sdl-error (str "Error on " ~first-sym)))
        ret#)))

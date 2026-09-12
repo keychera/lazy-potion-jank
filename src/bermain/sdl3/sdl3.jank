@@ -3,11 +3,14 @@
    "SDL3/SDL.h"
    "SDL3_image/SDL_image.h")
   (:require
-   [bermain.sdl3.common :refer [must-be-true must-be-some]]
+   [bermain.sdl3.common :refer [must-be-some must-be-true]]
    [bermain.sdl3.sdl3-input :as input]
+   [bermain.sdl3.text :as text]
    [bermain.sdl3.time :as time]))
 
-; following https://www.youtube.com/watch?v=Wu2g-N5Z78Y
+; learning: 
+; https://www.youtube.com/watch?v=Wu2g-N5Z78Y
+; https://gist.github.com/stavrossk/5004111
 
 (declare poll-events advance cleanup)
 
@@ -43,6 +46,7 @@
                       (cpp/SDL_SetTextureScaleMode cpp/SDL_SCALEMODE_NEAREST))]
       (loop [game (-> game
                       (time/init)
+                      (text/init)
                       (assoc :player {:x 16.0 :y 16.0}))]
         (when-not (::end? game)
           (let [total    (/ (cpp/SDL_GetTicks) 1000.0)
@@ -57,6 +61,7 @@
             (cpp/SDL_RenderClear sdl-renderer)
 
             (cpp/SDL_RenderTexture sdl-renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))
+            (text/render! game)
 
             (cpp/SDL_RenderPresent sdl-renderer)
             (recur game'))))

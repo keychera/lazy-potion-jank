@@ -2,10 +2,12 @@
  :deps {io.github.keychera/odoyle-rules {:git/sha "15c5f2cc0905cf54bd76db627f2114721cf75e32"}}
  :jank {:include-dirs [".libs/SDL3-3.4.2/x86_64-w64-mingw32/include"
                        ".libs/SDL3_image-3.4.0/x86_64-w64-mingw32/include"
+                       ".libs/SDL3_ttf-3.2.2/x86_64-w64-mingw32/include"
                        "src-cpp"]
         :library-dirs [".libs/SDL3-3.4.2/x86_64-w64-mingw32/bin"
-                       ".libs/SDL3_image-3.4.0/x86_64-w64-mingw32/bin"]
-        :linked-libraries ["SDL3" "SDL3_image"]
+                       ".libs/SDL3_image-3.4.0/x86_64-w64-mingw32/bin"
+                       ".libs/SDL3_ttf-3.2.2/x86_64-w64-mingw32/bin"]
+        :linked-libraries ["SDL3" "SDL3_image" "SDL3_ttf"]
         :compile-out "lazy-potion"}
  :aliases {:release  {:main lazy-potion.main}
            :repl-dev {:extra-paths ["src-dev"]
