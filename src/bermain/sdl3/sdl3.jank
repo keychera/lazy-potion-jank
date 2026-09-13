@@ -14,61 +14,63 @@
 
 (declare poll-events advance cleanup)
 
-(defn main []
-  (must-be-true (cpp/SDL_Init (bit-or cpp/SDL_INIT_VIDEO cpp/SDL_INIT_GAMEPAD)) nil)
+(defn main
+  ([] (main {}))
+  ([{:keys [stop-atom]}]
+   (must-be-true (cpp/SDL_Init (bit-or cpp/SDL_INIT_VIDEO cpp/SDL_INIT_GAMEPAD)) nil)
 
-  (let [main-scale   (cpp/SDL_GetDisplayContentScale (cpp/SDL_GetPrimaryDisplay))
-        window-flags (bit-or cpp/SDL_WINDOW_RESIZABLE cpp/SDL_WINDOW_HIDDEN cpp/SDL_WINDOW_HIGH_PIXEL_DENSITY)
-        width        (int (* 640 main-scale))
-        height       (int (* 360 main-scale))
-        game         {}
-        sdl-window   (must-be-some
-                      (cpp/SDL_CreateWindow "Hello again jank + sdl3!" width height window-flags)
-                      #_or (cleanup game))
-        game         (assoc game :sdl-window (cpp/box sdl-window))
-        sdl-renderer (must-be-some
-                      (cpp/SDL_CreateRenderer sdl-window cpp/nullptr)
-                      #_or (cleanup game))
-        numkeys      (cpp/int)
-        kb-state     (cpp/SDL_GetKeyboardState (cpp/& numkeys))
-        game         (assoc game
-                            :sdl-renderer (cpp/box sdl-renderer)
-                            :kb-state     (cpp/box kb-state))]
-    (cpp/SDL_SetWindowPosition sdl-window cpp/SDL_WINDOWPOS_CENTERED cpp/SDL_WINDOWPOS_CENTERED)
-    (cpp/SDL_SetWindowAlwaysOnTop sdl-window true)
-    (cpp/SDL_ShowWindow sdl-window)
+   (let [main-scale   (cpp/SDL_GetDisplayContentScale (cpp/SDL_GetPrimaryDisplay))
+         window-flags (bit-or cpp/SDL_WINDOW_RESIZABLE cpp/SDL_WINDOW_HIDDEN cpp/SDL_WINDOW_HIGH_PIXEL_DENSITY)
+         width        (int (* 640 main-scale))
+         height       (int (* 360 main-scale))
+         game         {}
+         sdl-window   (must-be-some
+                       (cpp/SDL_CreateWindow "Hello again jank + sdl3!" width height window-flags)
+                       #_or (cleanup game))
+         game         (assoc game :sdl-window (cpp/box sdl-window))
+         sdl-renderer (must-be-some
+                       (cpp/SDL_CreateRenderer sdl-window cpp/nullptr)
+                       #_or (cleanup game))
+         numkeys      (cpp/int)
+         kb-state     (cpp/SDL_GetKeyboardState (cpp/& numkeys))
+         game         (assoc game
+                             :sdl-renderer (cpp/box sdl-renderer)
+                             :kb-state     (cpp/box kb-state))]
+     (cpp/SDL_SetWindowPosition sdl-window cpp/SDL_WINDOWPOS_CENTERED cpp/SDL_WINDOWPOS_CENTERED)
+     (cpp/SDL_SetWindowAlwaysOnTop sdl-window true)
+     (cpp/SDL_ShowWindow sdl-window)
 
-    (let [logical-w 640
-          logical-h 360]
-      (cpp/SDL_SetRenderLogicalPresentation sdl-renderer logical-w logical-h cpp/SDL_LOGICAL_PRESENTATION_LETTERBOX))
+     (let [logical-w 640
+           logical-h 360]
+       (cpp/SDL_SetRenderLogicalPresentation sdl-renderer logical-w logical-h cpp/SDL_LOGICAL_PRESENTATION_LETTERBOX))
 
-    (let [potion-tex (doto (cpp/IMG_LoadTexture sdl-renderer "res/potion.png")
-                      (cpp/SDL_SetTextureScaleMode cpp/SDL_SCALEMODE_NEAREST))]
-      (loop [game (-> game
-                      (time/init)
-                      (text/init)
-                      (assoc :player {:x 16.0 :y 16.0}))]
-        (when-not (::end? game)
-          (let [total    (/ (cpp/SDL_GetTicks) 1000.0)
-                delta    (- total (::time/total game))
-                game'    (-> (poll-events game)
-                             (time/update-time total delta)
-                             (advance))
-                player   (:player game')
-                src-rect (cpp/SDL_FRect 0.0 0.0 60.0 67.0)
-                dst-rest (cpp/SDL_FRect (:x player) (:y player) 60.0 67.0)]
-            (cpp/SDL_SetRenderDrawColor sdl-renderer 25 25 32 255)
-            (cpp/SDL_RenderClear sdl-renderer)
+     (let [potion-tex (doto (cpp/IMG_LoadTexture sdl-renderer "res/potion.png")
+                        (cpp/SDL_SetTextureScaleMode cpp/SDL_SCALEMODE_NEAREST))]
+       (loop [game (-> game
+                       (time/init)
+                       (text/init)
+                       (assoc :player {:x 16.0 :y 16.0}))]
+         (when-not (or (::end? game) (and stop-atom @stop-atom))
+           (let [total    (/ (cpp/SDL_GetTicks) 1000.0)
+                 delta    (- total (::time/total game))
+                 game'    (-> (poll-events game)
+                              (time/update-time total delta)
+                              (advance))
+                 player   (:player game')
+                 src-rect (cpp/SDL_FRect 0.0 0.0 60.0 67.0)
+                 dst-rest (cpp/SDL_FRect (:x player) (:y player) 60.0 67.0)]
+             (cpp/SDL_SetRenderDrawColor sdl-renderer 25 25 32 255)
+             (cpp/SDL_RenderClear sdl-renderer)
 
-            (cpp/SDL_RenderTexture sdl-renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))
-            (text/render! game)
+             (cpp/SDL_RenderTexture sdl-renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))
+             (text/render! game)
 
-            (cpp/SDL_RenderPresent sdl-renderer)
-            (recur game'))))
+             (cpp/SDL_RenderPresent sdl-renderer)
+             (recur game'))))
 
-      (cpp/SDL_DestroyTexture potion-tex))
+       (cpp/SDL_DestroyTexture potion-tex))
 
-    (cleanup game)))
+     (cleanup game))))
 
 (defn poll-events [game]
   (let [event (cpp/SDL_Event)]

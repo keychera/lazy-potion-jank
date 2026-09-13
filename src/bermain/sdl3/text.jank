@@ -12,11 +12,12 @@
   (let [ttf-font (must-be-some (cpp/TTF_OpenFont "res/CardboardCrown.ttf" 32))]
     (assoc game ::ttf-font (cpp/box ttf-font))))
 
+(def message "Hello jank + SDL3_ttf!")
+
 (defn render! [game]
   (let [white    (cpp/SDL_Color 200 200 200 0)
         renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
         font     (cpp/unbox (:* cpp/TTF_Font) (::ttf-font game))
-        message  "Hello jank + SDL3_ttf !"
         surface  (cpp/TTF_RenderText_Blended font message (count message) white)
         texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
         player   (:player game)

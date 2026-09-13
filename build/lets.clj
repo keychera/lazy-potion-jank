@@ -133,9 +133,10 @@
     (b/process {:command-args jcmd})))
 
 (defn repl-dev
-  [{}]
+  [{:keys [args]}]
+  (log "setting up jank pseudo deps.edn project" args)
   (let [jedn (->jank-deps-edn @repl-dev-basis)
-        jcmd (jank-command jedn "repl" {:main-module (get-main-module @repl-dev-basis)})]
+        jcmd (jank-command jedn "repl" {})]
     (log jcmd)
     (b/process {:command-args jcmd})))
 

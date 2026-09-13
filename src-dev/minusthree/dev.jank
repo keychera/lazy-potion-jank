@@ -1,0 +1,35 @@
+(ns minusthree.dev
+  (:require
+   [bermain.sdl3.sdl3 :as sdl3]))
+
+(defonce stop-atom (atom false))
+(defonce refresh-atom (atom false))
+
+(defn toggle-stop []
+  ;; encountered this bug regarding this defn
+  ;; https://clojurians.slack.com/archives/C03SRH97FDK/p1789329083393359
+  (if (swap! stop-atom not)
+    "stopping game..."
+    "starting game!"))
+
+(defn refresh []
+  (reset! refresh-atom true)
+  "refreshing game...")
+
+(defn -main [& _]
+  (future
+    (while true
+      (try
+        (when (not @stop-atom)
+          (#'sdl3/main {:stop-atom stop-atom})
+          (reset! stop-atom true))
+        (catch cpp/jank.runtime.object_ref e
+          (println :caught e))))))
+
+(comment
+  (toggle-stop)
+  (refresh)
+
+  (-main)
+
+  ::waiting-for-something-to-happen?)
