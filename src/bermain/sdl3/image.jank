@@ -1,0 +1,20 @@
+(ns bermain.sdl3.image)
+
+(defn init [game]
+  (let [renderer   (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
+        potion-tex (doto (cpp/IMG_LoadTexture renderer "res/potion.png")
+                     (cpp/SDL_SetTextureScaleMode cpp/SDL_SCALEMODE_NEAREST))]
+    (assoc game ::potion-tex (cpp/box potion-tex))))
+
+(defn render! [game]
+  (let [potion-tex (cpp/unbox (:* cpp/SDL_Texture) (::potion-tex game))
+        renderer   (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
+        player     (:player game)
+        src-rect   (cpp/SDL_FRect 0.0 0.0 60.0 67.0)
+        dst-rest   (cpp/SDL_FRect (:x player) (:y player) 60.0 67.0)]
+    (cpp/SDL_RenderTexture renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))))
+
+(defn clean! [game]
+  (let [potion-tex (cpp/unbox (:* cpp/SDL_Texture) (::potion-tex game))]
+    (cpp/SDL_DestroyTexture potion-tex)))
+
