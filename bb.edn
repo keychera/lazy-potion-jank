@@ -1,5 +1,4 @@
 {:paths ["."]
- :deps {io.github.babashka/tools.bbuild {:git/sha "4493ba83664bdbfcaf932845fbd2f2183cdb7c1d"}}
  :tasks {prep     {:task (exec 'build.lets/prep)}
          jank     {:task (exec 'build.lets/jank)}
          repl-dev {:task (exec 'build.lets/repl-dev)}
