@@ -1,4 +1,7 @@
-(ns bermain.sdl3.image)
+(ns bermain.sdl3.image
+  (:include
+   "SDL3/SDL.h"
+   "SDL3_image/SDL_image.h"))
 
 (defn init [game]
   (let [renderer   (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))

@@ -94,12 +94,12 @@
     (log (str "  include dir: " sdl-dir "/include"))
     (log (str "  bin dir: " sdl-dir "/bin"))))
 
-(def sdl3-ttf "/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
+(def sdl3-ttf-release "/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
 
 (defn download-sdl3-ttf
   [{}]
   (let [sdl-devel (str dot-libs "/sdl3-ttf.tar.gz")
-        sdl-dir   (str dot-libs sdl3-ttf)]
+        sdl-dir   (str dot-libs sdl3-ttf-release)]
     (io/make-parents sdl-devel)
     (download "https://github.com/libsdl-org/SDL_ttf/releases/download/release-3.2.2/SDL3_ttf-devel-3.2.2-mingw.tar.gz" sdl-devel)
     (b/process {:command-args ["tar" "-xzvf" sdl-devel "-C" dot-libs]})
@@ -109,7 +109,8 @@
 
 (defn gather-shared-libs [& _]
   (fs/copy (str dot-libs sdl-release "/bin/SDL3.dll") (str @target-dir "/SDL3.dll") {:replace-existing true})
-  (fs/copy (str dot-libs sdl-image-release "/bin/SDL3_image.dll") (str @target-dir "/SDL3_image.dll") {:replace-existing true}))
+  (fs/copy (str dot-libs sdl-image-release "/bin/SDL3_image.dll") (str @target-dir "/SDL3_image.dll") {:replace-existing true})
+  (fs/copy (str dot-libs sdl3-ttf-release "/bin/SDL3_ttf.dll") (str @target-dir "/SDL3_ttf.dll") {:replace-existing true}))
 
 (defn prep [args]
   (prep-kondo args)

@@ -1,4 +1,6 @@
-(ns bermain.sdl3.common)
+(ns bermain.sdl3.common
+  (:include
+   "SDL3/SDL.h"))
 
 (defn throw-sdl-error [msg]
   (let [sdl-error (cpp/cast cpp/std.string (cpp/SDL_GetError))

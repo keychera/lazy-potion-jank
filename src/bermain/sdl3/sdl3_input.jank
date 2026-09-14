@@ -1,4 +1,6 @@
-(ns bermain.sdl3.sdl3-input)
+(ns bermain.sdl3.sdl3-input
+  (:include
+   "SDL3/SDL.h"))
 
 (def keyname->scancode
   {::esc cpp/SDL_SCANCODE_ESCAPE
