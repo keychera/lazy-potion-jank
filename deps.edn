@@ -10,5 +10,5 @@
         :linked-libraries ["SDL3" "SDL3_image" "SDL3_ttf"]
         :compile-out "lazy-potion"}
  :aliases {:release  {:main lazy-potion.main}
-           :repl-dev {#_#_:extra-paths ["srcdev"]
-                      :main lazy-potion.main}}}
+           :repl-dev {:extra-paths ["src-dev"]
+                      :main minusthree.dev}}}
