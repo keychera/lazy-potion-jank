@@ -11,7 +11,7 @@
 
 ; learning: 
 ; https://www.youtube.com/watch?v=Wu2g-N5Z78Y
-; https://gist.github.com/stavrossk/5004111
+; https://github.com/odinphillips/HelloWorld_SDL3_ttf/blob/main/main.cpp
 
 (declare poll-events advance cleanup)
 
