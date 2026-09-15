@@ -137,7 +137,7 @@
   [{:keys [args]}]
   (log "setting up jank pseudo deps.edn project" args)
   (let [jedn (->jank-deps-edn @repl-dev-basis)
-        jcmd (jank-command jedn "repl" {})]
+        jcmd (jank-command jedn "repl" {:main-module (get-main-module @repl-dev-basis)})]
     (log jcmd)
     (b/process {:command-args jcmd})))
 
@@ -145,7 +145,8 @@
   [{}]
   (let [jedn (->jank-deps-edn @deps-basis)
         jout (-> @deps-basis :jank :compile-out)
-        jcmd (jank-command jedn "compile" {:main-module (get-main-module @deps-basis) :extra ["--name" jout]})]
+        jcmd (jank-command jedn "compile" {:main-module (get-main-module @deps-basis)
+                                           :extra ["--name" jout "-O3"]})]
     (log jcmd)
     (b/process {:command-args jcmd})
     (gather-shared-libs)))

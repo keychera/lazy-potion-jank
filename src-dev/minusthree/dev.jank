@@ -16,7 +16,7 @@
   (reset! refresh-atom true)
   "refreshing game...")
 
-(defn -main [& _]
+(defn dev [& _]
   (future
     (while true
       (try
@@ -26,10 +26,12 @@
         (catch cpp/jank.runtime.object_ref e
           (println :caught e))))))
 
+(dev)
+
 (comment
   (toggle-stop)
   (refresh)
 
-  (-main)
+  (dev)
 
   ::waiting-for-something-to-happen?)
