@@ -1,7 +1,9 @@
 (ns bermain.sdl3.text
   (:include
+   "cmath"
    "SDL3_ttf/SDL_ttf.h")
   (:require
+   [bermain.game.anime :as anime]
    [bermain.sdl3.common :refer [must-be-some throw-sdl-error]]))
 
 (defn init [game]
@@ -15,13 +17,29 @@
 (def message "Hello jank + SDL3_ttf!")
 
 (defn render! [game]
-  (let [white    (cpp/SDL_Color 200 200 200 0)
+  (let [factor   (int (* 200 (/ (::anime/timer game) anime/anime-duration)))
+        white    (cpp/SDL_Color 200 200 200 0)
         renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
         font     (cpp/unbox (:* cpp/TTF_Font) (::ttf-font game))
         surface  (cpp/TTF_RenderText_Blended font message (count message) white)
         texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
         player   (:player game)
-        dst-rect (cpp/SDL_FRect (:x player) (+ (:y player) 60) 600.0 67.0)]
+        scale    1.0
+        dst-rect (cpp/SDL_FRect (:x player) (+ (:y player) 60)
+                                (* scale 300.0) (* scale 33.0))]
+    #_{:clj-kondo/ignore [:inline-def]}
+    (def debug factor)
     (cpp/SDL_DestroySurface surface)
     (cpp/SDL_RenderTexture renderer texture cpp/nullptr (cpp/& dst-rect))
     (cpp/SDL_DestroyTexture texture)))
+
+(comment
+
+  (cpp/sin (float debug))
+
+  ;; wrong type passed to cpp/sin will kill repl
+  (try (cpp/sin debug)
+       (catch cpp/jank.runtime.object_ref e
+         (println :caught e)))
+
+  :-)
