@@ -37,7 +37,10 @@
 
   (cpp/sin (float debug))
 
+  (cpp/sin 1)
+
   ;; wrong type passed to cpp/sin will kill repl
+  ;; above is wrong, (cpp/sin 1) still runs, the (def debug 1) then (cpp/sin debug) throws
   (try (cpp/sin debug)
        (catch cpp/jank.runtime.object_ref e
          (println :caught e)))
