@@ -19,8 +19,12 @@
 ;; jank pseudo-deps-edn, powered by https://github.com/babashka/tools.bbuild
 
 (defn ->jank-deps-edn [basis]
-  (let [{:keys [jank classpath]} basis]
-    (assoc jank :module-path (str/join File/pathSeparator (keys classpath)))))
+  (let [{:keys [jank classpath]} basis
+        no-clojure-classpath
+        (into [] (remove #(and (str/includes? % "org")
+                               (str/includes? % "clojure")))
+              (keys classpath))]
+    (assoc jank :module-path (str/join File/pathSeparator no-clojure-classpath))))
 
 (defn get-main-module [deps-edn]
   (-> deps-edn :argmap :main str))
