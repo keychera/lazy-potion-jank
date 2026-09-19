@@ -1,0 +1,66 @@
+(ns minusthree.time
+  (:require
+   [minusthree.macros :refer [deflet]]
+   [minusthree.world :as world]
+   [odoyle.rules :as o]))
+
+(def one-step 1000)
+
+(defn update-time [game total delta]
+  (-> (assoc game ::total total ::delta delta)
+      (update ::world/this o/insert ::now {::total total ::delta delta})))
+
+(defn do-something [tt _dt]
+  #_{:clj-kondo/ignore [:inline-def]}
+  (def debug (- tt 1)))
+
+(deflet rules
+  (o/ruleset
+   {::time
+    [:what
+     [::now ::total tt]
+     [::now ::delta dt]]
+
+    ::debug
+    [:what
+     [::now ::total tt]
+     :then
+     (do-something 9999 tt)]}))
+
+(def system
+  {::world/rules rules})
+
+(comment
+
+  debug
+
+  ;; https://github.com/jank-lang/jank/issues/982
+  ;; this segfaults
+  (o/ruleset {})
+  (o/ruleset {::time [::now ::total total]})
+  (def rules (o/ruleset {::time [::now ::total total]}))
+  (def rules (let [a (o/ruleset {::time [::now ::total total]})] a))
+  rules
+
+  (macroexpand '(o/ruleset {}))
+  (macroexpand '(o/ruleset {::time [::now ::total total]}))
+
+  (do (defn make-map [] {:a 1})
+      (defmacro a-vec [] [])
+      (defmacro b-vec [] [{:a 1} {:a 1}])
+      (defmacro c-vec [] [(make-map) (make-map)]))
+
+  (a-vec) ; segfault
+  (b-vec) ; segfault
+  (c-vec) ; segfault
+  (let [a (a-vec)] a) ; still segfault
+  (let [b (b-vec)] b) ; not segfault
+  (let [c (c-vec)] c) ; not segfault
+
+  ;; this is fine
+  (let [hey (o/ruleset {::time [::now ::total total]})] hey)
+
+  ;; empty ruleset segfault no matter what
+  (let [hey (o/ruleset {})] hey)
+
+  :-)

@@ -1,0 +1,12 @@
+(ns minusthree.macros
+  (:require [odoyle.rules :as o]))
+
+(defmacro s->
+  "Thread like `->` but always ends with (odoyle.rules/reset!)."
+  [x & forms]
+  `(-> ~x ~@forms o/reset!))
+
+; WORKAROUND for https://github.com/jank-lang/jank/issues/982
+(defmacro deflet
+  [bind body]
+  `(def ~bind (let [b# ~body] b#)))

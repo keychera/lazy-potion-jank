@@ -1,0 +1,12 @@
+(ns minusthree.engine
+  (:require
+   [minusthree.systems :as systems]
+   [minusthree.world :as world]
+   [odoyle.rules :as o]))
+
+(defn init [game]
+  (world/init-world game (systems/get-all)))
+
+(defn tick [game]
+  (-> game
+      (update ::world/this o/fire-rules)))
