@@ -9,10 +9,10 @@
     (throw (ex-info msg {} {:data sdl-error}))))
 
 (defmacro must-be-true
-  [form callback]
+  [form & callback]
   (let [first-sym (str (first form))]
     `(when (not ~form)
-       ~callback
+       ~@callback
        (throw-sdl-error (str "Error on " ~first-sym)))))
 
 (defmacro must-be-some

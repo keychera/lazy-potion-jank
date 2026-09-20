@@ -3,9 +3,10 @@
    "SDL3/SDL.h"))
 
 (def keyname->scancode
-  {::esc cpp/SDL_SCANCODE_ESCAPE
-   ::a   cpp/SDL_SCANCODE_A
-   ::d   cpp/SDL_SCANCODE_D})
+  {::esc   cpp/SDL_SCANCODE_ESCAPE
+   ::a     cpp/SDL_SCANCODE_A
+   ::d     cpp/SDL_SCANCODE_D
+   ::space cpp/SDL_SCANCODE_SPACE})
 
 (defn process-input [{:keys [kb-state] :as prev-game}]
   (let [kb-state (cpp/unbox (:* (:const cpp/bool)) kb-state)

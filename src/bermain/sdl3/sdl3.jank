@@ -6,11 +6,12 @@
    [bermain.game.anime :as anime]
    [bermain.sdl3.common :refer [must-be-some must-be-true]]
    [bermain.sdl3.image :as image]
+   [bermain.sdl3.mixer :as mixer]
    [bermain.sdl3.sdl3-input :as input]
    [bermain.sdl3.text :as text]
    [bermain.sdl3.time :as time]
-   [minusthree.time :as time2]
-   [minusthree.engine :as engine]))
+   [minusthree.engine :as engine]
+   [minusthree.time :as time2]))
 
 ; learning: 
 ; https://www.youtube.com/watch?v=Wu2g-N5Z78Y
@@ -21,7 +22,7 @@
 (defn main
   ([] (main {}))
   ([{:keys [stop-atom]}]
-   (must-be-true (cpp/SDL_Init (bit-or cpp/SDL_INIT_VIDEO cpp/SDL_INIT_GAMEPAD)) nil)
+   (must-be-true (cpp/SDL_Init (bit-or cpp/SDL_INIT_VIDEO cpp/SDL_INIT_GAMEPAD)))
 
    (let [main-scale   (cpp/SDL_GetDisplayContentScale (cpp/SDL_GetPrimaryDisplay))
          window-flags (bit-or cpp/SDL_WINDOW_RESIZABLE cpp/SDL_WINDOW_HIDDEN cpp/SDL_WINDOW_HIGH_PIXEL_DENSITY)
@@ -54,6 +55,7 @@
                      (anime/init)
                      (image/init)
                      (text/init)
+                     (mixer/init)
                      (assoc :player {:x 16.0 :y 16.0}))]
        (if-not (or (::end? game) (and stop-atom @stop-atom))
          (let [total    (/ (cpp/SDL_GetTicks) 1000.0)
@@ -74,6 +76,7 @@
            (recur game'))
          (doto game
            (image/clean!)
+           (mixer/clean!)
            (cleanup)))))))
 
 (defn poll-events [game]
@@ -96,8 +99,9 @@
   (let [move     (* 128 delta)
         pressed? (::input/pressed? game)]
     (cond-> game
-      (::input/a pressed?) (update-in [:player :x] - move)
-      (::input/d pressed?) (update-in [:player :x] + move))))
+      (::input/a pressed?)     (update-in [:player :x] - move)
+      (::input/d pressed?)     (update-in [:player :x] + move)
+      (::input/space pressed?) (doto (mixer/play-that-track!)))))
 
 (defn cleanup [{:keys [sdl-renderer sdl-window]}]
   (when sdl-renderer (cpp/SDL_DestroyRenderer (cpp/unbox (:* cpp/SDL_Renderer) sdl-renderer)))

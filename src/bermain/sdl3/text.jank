@@ -4,12 +4,10 @@
    "SDL3_ttf/SDL_ttf.h")
   (:require
    [bermain.game.anime :as anime]
-   [bermain.sdl3.common :refer [must-be-some throw-sdl-error]]))
+   [bermain.sdl3.common :refer [must-be-true must-be-some]]))
 
 (defn init [game]
-  (let [ret (cpp/TTF_Init)]
-    (when (< ret 0)
-      (throw-sdl-error "TTF_Init error")))
+  (must-be-true (cpp/TTF_Init))
 
   (let [ttf-font (must-be-some (cpp/TTF_OpenFont "res/fonts/CardboardCrown/CardboardCrown.ttf" 32))]
     (assoc game ::ttf-font (cpp/box ttf-font))))
