@@ -72,56 +72,52 @@
     (io/copy input-stream (io/file to-file))))
 
 (def dot-libs ".libs")
-(def sdl-release "/SDL3-3.4.2/x86_64-w64-mingw32")
 
-(defn download-sdl3
-  [{}]
-  (let [sdl-devel (str dot-libs "/sdl3.tar.gz")
-        sdl-dir   (str dot-libs sdl-release)]
+(def sdl3-dep
+  {:download-url "https://github.com/libsdl-org/SDL/releases/download/release-3.4.2/SDL3-devel-3.4.2-mingw.tar.gz"
+   :target-tar-gz "sdl3.tar.gz"
+   :release-dir "SDL3-3.4.2/x86_64-w64-mingw32"
+   :dll-file "bin/SDL3.dll"})
+
+(def sdl3-image-dep
+  {:download-url "https://github.com/libsdl-org/SDL_image/releases/download/release-3.4.0/SDL3_image-devel-3.4.0-mingw.tar.gz"
+   :target-tar-gz "sdl3-image.tar.gz"
+   :release-dir "SDL3_image-3.4.0/x86_64-w64-mingw32"
+   :dll-file "bin/SDL3_image.dll"})
+
+(def sdl3-ttf-dep
+  {:download-url "https://github.com/libsdl-org/SDL_ttf/releases/download/release-3.2.2/SDL3_ttf-devel-3.2.2-mingw.tar.gz"
+   :target-tar-gz "sdl3-ttf.tar.gz"
+   :release-dir "SDL3_ttf-3.2.2/x86_64-w64-mingw32"
+   :dll-file "bin/SDL3_ttf.dll"})
+
+(def sdl3-mixer-dep
+  {:download-url "https://github.com/libsdl-org/SDL_mixer/releases/download/release-3.2.4/SDL3_mixer-devel-3.2.4-mingw.tar.gz"
+   :target-tar-gz "sdl3-mixer.tar.gz"
+   :release-dir "SDL3_mixer-3.2.4/x86_64-w64-mingw32"
+   :dll-file "bin/SDL3_mixer.dll"})
+
+(defn download-sdl-dep
+  [{:keys [release-dir target-tar-gz]}]
+  (let [sdl-devel (str dot-libs "/" target-tar-gz)
+        sdl-dir   (str dot-libs "/" release-dir)]
     (io/make-parents sdl-devel)
-    (download "https://github.com/libsdl-org/SDL/releases/download/release-3.4.2/SDL3-devel-3.4.2-mingw.tar.gz" sdl-devel)
-    (b/process {:command-args ["tar" "-xzvf" sdl-devel "-C" dot-libs]})
-    (log "download-sdl3 done")
-    (log (str "  include dir: " sdl-dir "/include"))
-    (log (str "  bin dir: " sdl-dir "/bin"))))
-
-(def sdl-image-release "/SDL3_image-3.4.0/x86_64-w64-mingw32")
-
-(defn download-sdl3-image
-  [{}]
-  (let [sdl-devel (str dot-libs "/sdl3-image.tar.gz")
-        sdl-dir   (str dot-libs sdl-image-release)]
-    (io/make-parents sdl-devel)
-    (download "https://github.com/libsdl-org/SDL_image/releases/download/release-3.4.0/SDL3_image-devel-3.4.0-mingw.tar.gz" sdl-devel)
-    (b/process {:command-args ["tar" "-xzvf" sdl-devel "-C" dot-libs]})
-    (log "download-sdl3-image done")
-    (log (str "  include dir: " sdl-dir "/include"))
-    (log (str "  bin dir: " sdl-dir "/bin"))))
-
-(def sdl3-ttf-release "/SDL3_ttf-3.2.2/x86_64-w64-mingw32")
-
-(defn download-sdl3-ttf
-  [{}]
-  (let [sdl-devel (str dot-libs "/sdl3-ttf.tar.gz")
-        sdl-dir   (str dot-libs sdl3-ttf-release)]
-    (io/make-parents sdl-devel)
-    (download "https://github.com/libsdl-org/SDL_ttf/releases/download/release-3.2.2/SDL3_ttf-devel-3.2.2-mingw.tar.gz" sdl-devel)
+    (download "https://github.com/libsdl-org/SDL_mixer/releases/download/release-3.2.4/SDL3_mixer-devel-3.2.4-mingw.tar.gz" sdl-devel)
     (b/process {:command-args ["tar" "-xzvf" sdl-devel "-C" dot-libs]})
     (log "download-sdl3-ttf done")
     (log (str "  include dir: " sdl-dir "/include"))
     (log (str "  bin dir: " sdl-dir "/bin"))))
 
 (defn gather-shared-libs [& _]
-  (fs/copy (str dot-libs sdl-release "/bin/SDL3.dll") (str @target-dir "/SDL3.dll") {:replace-existing true})
-  (fs/copy (str dot-libs sdl-image-release "/bin/SDL3_image.dll") (str @target-dir "/SDL3_image.dll") {:replace-existing true})
-  (fs/copy (str dot-libs sdl3-ttf-release "/bin/SDL3_ttf.dll") (str @target-dir "/SDL3_ttf.dll") {:replace-existing true}))
+  (doseq [sdl-dep [sdl3-dep sdl3-image-dep sdl3-ttf-dep sdl3-mixer-dep]]
+    (fs/copy (str dot-libs "/" (:release-dir sdl-dep) "/" (:dll-file sdl-dep))
+             (str @target-dir "/" (str/replace-first (:dll-file sdl-dep) #"bin/" "")) {:replace-existing true})))
 
 (defn prep [args]
   (prep-kondo args)
   (tell-clangd args)
-  (download-sdl3 args)
-  (download-sdl3-image args)
-  (download-sdl3-ttf args))
+  (doseq [sdl-dep [sdl3-dep sdl3-image-dep sdl3-ttf-dep sdl3-mixer-dep]]
+    (download-sdl-dep sdl-dep)))
 
 (defn clean [& _]
   (println "cleaning target...")
