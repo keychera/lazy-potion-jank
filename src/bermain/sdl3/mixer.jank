@@ -2,7 +2,7 @@
   (:include
    "SDL3_mixer/SDL_mixer.h")
   (:require
-   [bermain.sdl3.common :refer [must-be-true must-be-some]]))
+   [bermain.sdl3.error :refer [must-be-true must-be-some]]))
 
 (defn init [game]
   (must-be-true (cpp/MIX_Init))

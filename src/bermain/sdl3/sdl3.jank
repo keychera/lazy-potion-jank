@@ -4,7 +4,7 @@
    "SDL3_image/SDL_image.h")
   (:require
    [bermain.game.anime :as anime]
-   [bermain.sdl3.common :refer [must-be-some must-be-true]]
+   [bermain.sdl3.error :as error :refer [must-be-some must-be-true]]
    [bermain.sdl3.image :as image]
    [bermain.sdl3.mixer :as mixer]
    [bermain.sdl3.sdl3-input :as input]
@@ -32,6 +32,7 @@
          sdl-window   (must-be-some
                        (cpp/SDL_CreateWindow "Hello again jank + sdl3!" width height window-flags)
                        #_or (cleanup game))
+         _            (reset! error/sdl-window* (cpp/box sdl-window))
          game         (assoc game :sdl-window (cpp/box sdl-window))
          sdl-renderer (must-be-some
                        (cpp/SDL_CreateRenderer sdl-window cpp/nullptr)
@@ -77,6 +78,7 @@
          (doto game
            (image/clean!)
            (mixer/clean!)
+           (error/clean!)
            (cleanup)))))))
 
 (defn poll-events [game]
