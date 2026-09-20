@@ -18,8 +18,9 @@
 (defn render-9-panel! [game]
   (let [panel-tex (cpp/unbox (:* cpp/SDL_Texture) (::panel-tex game))
         renderer  (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
+        player    (:player game)
         src-rect  (cpp/SDL_FRect 0.0 0.0 48.0 48.0)
-        dst-rest  (cpp/SDL_FRect 6.0 6.0 320.0 120.0)]
+        dst-rest  (cpp/SDL_FRect (- (:x player) 9.0) (- (:y player) 9.0) 320.0 120.0)]
     (cpp/SDL_RenderTexture9Grid renderer panel-tex (cpp/& src-rect)
                                 14.0 14.0 14.0 14.0 0.0
                                 (cpp/& dst-rest))))
