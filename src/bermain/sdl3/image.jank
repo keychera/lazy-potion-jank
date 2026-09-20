@@ -8,16 +8,30 @@
 (defn init [game]
   (let [renderer   (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
         potion-tex (doto (cpp/IMG_LoadTexture renderer "res/potion.png")
+                     (cpp/SDL_SetTextureScaleMode cpp/SDL_SCALEMODE_NEAREST))
+        panel-tex  (doto (cpp/IMG_LoadTexture renderer "res/panel-005.png")
                      (cpp/SDL_SetTextureScaleMode cpp/SDL_SCALEMODE_NEAREST))]
-    (assoc game ::potion-tex (cpp/box potion-tex))))
+    (assoc game
+           ::panel-tex  (cpp/box panel-tex)
+           ::potion-tex (cpp/box potion-tex))))
+
+(defn render-9-panel! [game]
+  (let [panel-tex (cpp/unbox (:* cpp/SDL_Texture) (::panel-tex game))
+        renderer  (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
+        src-rect  (cpp/SDL_FRect 0.0 0.0 48.0 48.0)
+        dst-rest  (cpp/SDL_FRect 6.0 6.0 320.0 120.0)]
+    (cpp/SDL_RenderTexture9Grid renderer panel-tex (cpp/& src-rect)
+                                14.0 14.0 14.0 14.0 0.0
+                                (cpp/& dst-rest))))
 
 (defn render! [game]
-  (let [potion-tex (cpp/unbox (:* cpp/SDL_Texture) (::potion-tex game))
+  (let [potion-tex (cpp/unbox (:* cpp/SDL_Texture)  (::potion-tex game))
         renderer   (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
         player     (:player game)
         frame      (::anime/frame game)
         src-rect   (cpp/SDL_FRect (* frame 66.0) 0.0 66.0 67.0)
         dst-rest   (cpp/SDL_FRect (:x player) (:y player) 64.0 64.0)]
+    (render-9-panel! game)
     (cpp/SDL_RenderTexture renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))))
 
 (defn clean! [game]

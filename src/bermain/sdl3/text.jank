@@ -16,10 +16,10 @@
 
 (defn render! [game]
   (let [factor   (int (* 200 (/ (::anime/timer game) anime/anime-duration)))
-        white    (cpp/SDL_Color 200 200 200 0)
+        black    (cpp/SDL_Color 0 0 0 0)
         renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
         font     (cpp/unbox (:* cpp/TTF_Font) (::ttf-font game))
-        surface  (cpp/TTF_RenderText_Blended font message (count message) white)
+        surface  (cpp/TTF_RenderText_Blended font message (count message) black)
         texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
         player   (:player game)
         scale    1.0
