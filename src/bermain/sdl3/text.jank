@@ -11,7 +11,7 @@
     (when (< ret 0)
       (throw-sdl-error "TTF_Init error")))
 
-  (let [ttf-font (must-be-some (cpp/TTF_OpenFont "res/CardboardCrown.ttf" 32))]
+  (let [ttf-font (must-be-some (cpp/TTF_OpenFont "res/fonts/CardboardCrown/CardboardCrown.ttf" 32))]
     (assoc game ::ttf-font (cpp/box ttf-font))))
 
 (def message "Hello jank + SDL3_ttf!")

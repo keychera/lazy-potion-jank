@@ -1,8 +1,15 @@
-# commands
+# resources
 
-https://opengameart.org/content/potion-1
+- CardboardCrown.tff, license provided
 
-magick werff_0.gif -coalesce +append potion.png
+- potion.png
 
+    from: https://opengameart.org/content/potion-1
 
-I forgot where I got CardboardCrown.tff from...
+    ```sh
+    magick werff_0.gif -coalesce +append potion.png
+    ```
+
+- switch11-1.ogg
+
+    from: https://kenney.nl/assets/ui-audio
