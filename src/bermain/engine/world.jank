@@ -1,7 +1,6 @@
-(ns minusthree.world
+(ns bermain.engine.world
   (:require
    [odoyle.rules :as o]))
-
 
 (defn prepare-world [world game all-rules init-fns before-refresh-fns]
   (let [world   (if world

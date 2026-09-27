@@ -1,7 +1,7 @@
-(ns bermain.game.anime
+(ns bermain.engine.anime
   (:include "cmath")
   (:require
-   [minusthree.time :as time]))
+   [bermain.engine.time :as time]))
 
 (def target-fps 12)
 (def frame-duration (/ 1.0 target-fps))

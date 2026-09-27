@@ -1,6 +1,0 @@
-(ns minusthree.systems
-  (:require
-   [minusthree.time :as time]))
-
-(defn get-all []
-  [time/system])

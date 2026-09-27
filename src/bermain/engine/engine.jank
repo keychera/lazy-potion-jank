@@ -1,7 +1,7 @@
-(ns minusthree.engine
+(ns bermain.engine.engine
   (:require
-   [minusthree.systems :as systems]
-   [minusthree.world :as world]
+   [bermain.engine.systems :as systems]
+   [bermain.engine.world :as world]
    [odoyle.rules :as o]))
 
 (defn init [game]

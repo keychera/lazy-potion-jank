@@ -3,14 +3,14 @@
    "SDL3/SDL.h"
    "SDL3_image/SDL_image.h")
   (:require
-   [bermain.game.anime :as anime]
+   [bermain.engine.anime :as anime]
    [bermain.sdl3.error :as error :refer [must-be-some must-be-true]]
    [bermain.sdl3.image :as image]
    [bermain.sdl3.mixer :as mixer]
    [bermain.sdl3.sdl3-input :as input]
    [bermain.sdl3.text :as text]
-   [minusthree.engine :as engine]
-   [minusthree.time :as time]))
+   [bermain.engine.engine :as engine]
+   [bermain.engine.time :as time]))
 
 ; learning: 
 ; https://www.youtube.com/watch?v=Wu2g-N5Z78Y

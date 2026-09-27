@@ -13,4 +13,4 @@
         :compile-out "lazy-potion"}
  :aliases {:release  {:main lazy-potion.main}
            :repl-dev {:extra-paths ["src-dev"]
-                      :main minusthree.dev}}}
+                      :main bermain.dev}}}

@@ -1,7 +1,7 @@
-(ns minusthree.time
+(ns bermain.engine.time
   (:require
-   [minusthree.macros :refer [deflet]]
-   [minusthree.world :as world]
+   [bermain.engine.macros :refer [deflet]]
+   [bermain.engine.world :as world]
    [odoyle.rules :as o]))
 
 (defn update-time [game]

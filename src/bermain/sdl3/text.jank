@@ -3,7 +3,7 @@
    "cmath"
    "SDL3_ttf/SDL_ttf.h")
   (:require
-   [bermain.game.anime :as anime]
+   [bermain.engine.anime :as anime]
    [bermain.sdl3.error :refer [must-be-true must-be-some]]))
 
 (defn init [game]

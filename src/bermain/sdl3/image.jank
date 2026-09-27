@@ -3,7 +3,7 @@
    "SDL3/SDL.h"
    "SDL3_image/SDL_image.h")
   (:require
-   [bermain.game.anime :as anime]))
+   [bermain.engine.anime :as anime]))
 
 (defn init [game]
   (let [renderer   (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
