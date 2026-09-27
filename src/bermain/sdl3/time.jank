@@ -1,7 +1,0 @@
-(ns bermain.sdl3.time)
-
-(defn init [game]
-  (assoc game ::total 0))
-
-(defn update-time [game total delta]
-  (-> (assoc game ::total total ::delta delta)))

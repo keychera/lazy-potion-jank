@@ -1,7 +1,7 @@
 (ns bermain.game.anime
   (:include "cmath")
   (:require
-   [bermain.sdl3.time :as time]))
+   [minusthree.time :as time]))
 
 (def target-fps 12)
 (def frame-duration (/ 1.0 target-fps))
@@ -11,18 +11,14 @@
 (defn init [game]
   (assoc game ::timer 0.0 ::frame 0))
 
-(defn advance [{:keys [::time/delta ::timer] :as game}]
-  (let [timer' (+ timer delta)
+(defn advance [{:keys [::timer] :as game}]
+  (let [delta  (::time/delta game)
+        timer' (+ timer delta)
         timer' (if (> timer' anime-duration)
                  (mod timer' anime-duration)
                  timer')
         frame  (cpp/floor (/ timer' frame-duration))]
-    #_{:clj-kondo/ignore [:inline-def]}
-    (def debug game)
     (assoc game ::timer timer' ::frame frame)))
 
-(comment
-
-  ((juxt ::frame ::timer) debug)
-  
-  :-)
+(= (let [{:keys [delta]} (list {:delta 1})] delta)
+   (let [{:keys [delta]} {:delta 1}] delta))

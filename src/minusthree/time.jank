@@ -4,35 +4,23 @@
    [minusthree.world :as world]
    [odoyle.rules :as o]))
 
-(def one-step 1000)
-
-(defn update-time [game total delta]
-  (-> (assoc game ::total total ::delta delta)
-      (update ::world/this o/insert ::now {::total total ::delta delta})))
-
-(defn do-something [tt _dt]
-  #_{:clj-kondo/ignore [:inline-def]}
-  (def debug (- tt 1)))
+(defn update-time [game]
+  (let [total (/ (cpp/SDL_GetTicks) 1000.0)
+        delta (- total (::total game 0))]
+    (-> (assoc game ::total total ::delta delta)
+        (update ::world/this o/insert ::now {::total total ::delta delta}))))
 
 (deflet rules
   (o/ruleset
    {::time
     [:what
      [::now ::total tt]
-     [::now ::delta dt]]
-
-    ::debug
-    [:what
-     [::now ::total tt]
-     :then
-     (do-something 9999 tt)]}))
+     [::now ::delta dt]]}))
 
 (def system
   {::world/rules rules})
 
 (comment
-
-  debug
 
   ;; https://github.com/jank-lang/jank/issues/982
   ;; this segfaults
