@@ -1,6 +1,8 @@
 (ns bermain.engine.systems
   (:require
+   [bermain.engine.dialogue :as dialogue]
    [bermain.engine.time :as time]))
 
 (defn get-all []
-  [time/system])
+  [time/system
+   dialogue/system])

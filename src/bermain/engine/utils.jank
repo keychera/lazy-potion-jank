@@ -1,0 +1,6 @@
+(ns bermain.engine.utils
+  (:require
+   [odoyle.rules :as o]))
+
+(defn query-one [odoyle-session rule-name]
+  (first (o/query-all odoyle-session rule-name)))

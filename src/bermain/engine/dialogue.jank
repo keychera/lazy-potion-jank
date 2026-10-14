@@ -1,0 +1,58 @@
+(ns bermain.engine.dialogue
+  (:require
+   [bermain.engine.macros :refer [deflet s->]]
+   [bermain.engine.time :as time]
+   [bermain.engine.utils :as utils]
+   [bermain.engine.world :as world :refer [esse]]
+   [odoyle.rules :as o]))
+
+(deflet rules
+  (o/ruleset
+   {::world-mutator
+    [:what
+     [::time/now ::time/delta dt]
+     [:debug ::world-mutator world-mutator]
+     :then
+     (when-let [mutator-fn @world-mutator]
+       (reset! world-mutator nil)
+       (s-> (mutator-fn session)))]
+
+    ::animate-dialogue
+    [:what
+     [esse-id ::dialogue dialogue]
+     [esse-id ::progress progress]]}))
+
+(defonce world-mutator (atom nil))
+
+(defn init-fn [world _game]
+  (-> world
+      (esse :debug {::world-mutator world-mutator})
+      (esse :one {::dialogue "hello jank!" ::progress 5})))
+
+(defn render!
+  [game
+   ^(:* cpp/SDL_Renderer) renderer
+   ^(:* cpp/TTF_Font) font]
+  (let [world (::world/this game)
+        {:keys [dialogue progress]} (utils/query-one world ::animate-dialogue)
+        black    (cpp/SDL_Color 255 255 255 255)
+        dialogue (subs dialogue 0 progress)
+        surface  (cpp/TTF_RenderText_Blended font dialogue (count dialogue) black)
+        texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
+        dst-rect (cpp/SDL_FRect 120.0 240.0 90.0 33.0)]
+    (cpp/SDL_DestroySurface surface)
+    (cpp/SDL_RenderTexture renderer texture cpp/nullptr (cpp/& dst-rect))
+    (cpp/SDL_DestroyTexture texture)))
+
+(def system
+  {::world/init-fn init-fn
+   ::world/rules rules})
+
+(comment
+
+  (reset! world-mutator
+          (fn [world]
+            (-> world
+                (esse :one {::dialogue "hello jank!" ::progress 10}))))
+
+  :-)
