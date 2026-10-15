@@ -6,7 +6,8 @@
    [bermain.engine.world :as world :refer [esse]]
    [odoyle.rules :as o]))
 
-(def tick-length 0.5)
+;; work around for https://github.com/jank-lang/jank/issues/1095
+(def tick-length (/ 1.0 42))
 
 (def rules
   (o/ruleset
@@ -75,8 +76,7 @@
   
   (add-tap #(def debug %))
   debug
-
-  (< 0 tick-length)
+  
   (reset! world-mutator
           (fn [world]
             (-> world
