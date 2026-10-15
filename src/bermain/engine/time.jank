@@ -1,6 +1,5 @@
 (ns bermain.engine.time
   (:require
-   [bermain.engine.macros :refer [deflet]]
    [bermain.engine.world :as world]
    [odoyle.rules :as o]))
 
@@ -10,7 +9,7 @@
     (-> (assoc game ::total total ::delta delta)
         (update ::world/this o/insert ::now {::total total ::delta delta}))))
 
-(deflet rules
+(def rules
   (o/ruleset
    {::time
     [:what
@@ -19,36 +18,3 @@
 
 (def system
   {::world/rules rules})
-
-(comment
-
-  ;; https://github.com/jank-lang/jank/issues/982
-  ;; this segfaults
-  (o/ruleset {})
-  (o/ruleset {::time [::now ::total total]})
-  (def rules (o/ruleset {::time [::now ::total total]}))
-  (def rules (let [a (o/ruleset {::time [::now ::total total]})] a))
-  rules
-
-  (macroexpand '(o/ruleset {}))
-  (macroexpand '(o/ruleset {::time [::now ::total total]}))
-
-  (do (defn make-map [] {:a 1})
-      (defmacro a-vec [] [])
-      (defmacro b-vec [] [{:a 1} {:a 1}])
-      (defmacro c-vec [] [(make-map) (make-map)]))
-
-  (a-vec) ; segfault
-  (b-vec) ; segfault
-  (c-vec) ; segfault
-  (let [a (a-vec)] a) ; still segfault
-  (let [b (b-vec)] b) ; not segfault
-  (let [c (c-vec)] c) ; not segfault
-
-  ;; this is fine
-  (let [hey (o/ruleset {::time [::now ::total total]})] hey)
-
-  ;; empty ruleset segfault no matter what
-  (let [hey (o/ruleset {})] hey)
-
-  :-)
