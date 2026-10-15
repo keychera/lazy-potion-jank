@@ -36,10 +36,13 @@
   (let [world (::world/this game)
         {:keys [dialogue progress]} (utils/query-one world ::animate-dialogue)
         black    (cpp/SDL_Color 255 255 255 255)
-        dialogue (subs dialogue 0 progress)
+        w        (cpp/int)
+        h        (cpp/int)
+        dialogue (subs dialogue 0 (min (max progress 0) (count dialogue)))
+        _        (cpp/TTF_GetStringSize font dialogue (count dialogue) (cpp/& w) (cpp/& h))
         surface  (cpp/TTF_RenderText_Blended font dialogue (count dialogue) black)
         texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
-        dst-rect (cpp/SDL_FRect 120.0 240.0 90.0 33.0)]
+        dst-rect (cpp/SDL_FRect 120.0 240.0 w h)]
     (cpp/SDL_DestroySurface surface)
     (cpp/SDL_RenderTexture renderer texture cpp/nullptr (cpp/& dst-rect))
     (cpp/SDL_DestroyTexture texture)))
@@ -49,10 +52,10 @@
    ::world/rules rules})
 
 (comment
-
+  
   (reset! world-mutator
           (fn [world]
             (-> world
-                (esse :one {::dialogue "hello jank!" ::progress 10}))))
+                (esse :one {::dialogue "hello jank!" ::progress 1}))))
 
   :-)
