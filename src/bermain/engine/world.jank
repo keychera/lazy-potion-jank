@@ -40,5 +40,5 @@
 (defn esse
   "insert an esse given the facts in the shape of maps of attr->value.
    this fn is merely sugar, spice, and everything nice"
-  [world esse-id & facts]
-  (o/insert world esse-id (apply merge facts)))
+  [world esse-id facts]
+  (o/insert world esse-id facts))

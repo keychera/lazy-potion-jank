@@ -6,9 +6,6 @@
    [bermain.engine.world :as world :refer [esse]]
    [odoyle.rules :as o]))
 
-;; work around for https://github.com/jank-lang/jank/issues/1095
-(def tick-length (/ 1.0 42))
-
 (def rules
   (o/ruleset
    {::world-mutator
@@ -23,6 +20,7 @@
     ::dialogue-tick
     [:what
      [::time/now ::time/delta dt]
+     [::time/now ::tick-length tick-length {:then false}]
      [::time/now ::tick-progress tick-progress {:then false}]
      [::time/now ::tick tick {:then false}]
      :then
@@ -80,6 +78,7 @@
   (reset! world-mutator
           (fn [world]
             (-> world
+                (esse ::time/now {::tick-length 0.05})
                 (esse :one {::dialogue "hello jank!" ::progress 1}))))
 
   :-)
