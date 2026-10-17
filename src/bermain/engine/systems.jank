@@ -4,5 +4,5 @@
    [bermain.engine.time :as time]))
 
 (defn get-all []
-  [time/system
-   dialogue/system])
+  [(time/get-system)
+   (dialogue/get-system)])

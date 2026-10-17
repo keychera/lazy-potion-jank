@@ -16,5 +16,5 @@
      [::now ::total tt]
      [::now ::delta dt]]}))
 
-(def system
+(defn get-system []
   {::world/rules rules})

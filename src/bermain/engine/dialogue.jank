@@ -43,7 +43,7 @@
 
 (defn init-fn [world _game]
   (-> world
-      (esse ::time/now {::world-mutator world-mutator 
+      (esse ::time/now {::world-mutator world-mutator
                         ::tick 0
                         ::tick-progress 0})
       (esse :one {::dialogue "hello jank!" ::progress 5})))
@@ -61,24 +61,24 @@
           surface  (cpp/TTF_RenderText_Blended font dialogue (count dialogue) black)
           texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
           dst-rect (cpp/SDL_FRect 120.0 240.0 w h)]
-      
-    (cpp/SDL_DestroySurface surface)
-    (cpp/SDL_RenderTexture renderer texture cpp/nullptr (cpp/& dst-rect))
-    (cpp/SDL_DestroyTexture texture))))
 
-(def system
+      (cpp/SDL_DestroySurface surface)
+      (cpp/SDL_RenderTexture renderer texture cpp/nullptr (cpp/& dst-rect))
+      (cpp/SDL_DestroyTexture texture))))
+
+(defn get-system []
   {::world/init-fn init-fn
    ::world/rules rules})
 
 (comment
-  
+
   (add-tap #(def debug %))
   debug
-  
+
   (reset! world-mutator
           (fn [world]
             (-> world
                 (esse ::time/now {::tick-length 0.05})
-                (esse :one {::dialogue "hello jank!" ::progress 1}))))
+                (esse :one {::dialogue "hello jank!" ::progress -1}))))
 
   :-)
