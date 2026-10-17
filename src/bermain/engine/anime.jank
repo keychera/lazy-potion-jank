@@ -20,5 +20,3 @@
         frame  (cpp/floor (/ timer' frame-duration))]
     (assoc game ::timer timer' ::frame frame)))
 
-(= (let [{:keys [delta]} (list {:delta 1})] delta)
-   (let [{:keys [delta]} {:delta 1}] delta))
