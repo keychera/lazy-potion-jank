@@ -9,9 +9,15 @@
 
 (defn mutate-world! [mutate-fn]
   ;; this is not swap! by design!
- ;;  it supposed to hold an (fn [world] world)
+  ;;  it supposed to hold an (fn [world] world)
   ;; then the atom will be polled by ::world-mutator and consumed once
   (reset! world-mutator mutate-fn))
+
+(defn inject-facts! [& facts]
+  (mutate-world!
+   (fn [world]
+     (reduce (fn [w [id attr->value]] (o/insert w id attr->value))
+             world facts))))
 
 (defn init-fn [world _game]
   (esse world ::time/now {::world-mutator world-mutator}))

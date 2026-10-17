@@ -97,28 +97,15 @@
              [:nf "This is ClojureScript"]]})
 
 (comment
-  (require '[bermain.engine.world-mutator :refer [mutate-world! debug-tap]])
+  (require '[bermain.engine.world-mutator :refer [inject-facts! debug-tap]])
 
   debug-tap
 
-  (dialogue->string (-> dofida-play :scripts (get 1) (get 1)))
-  (reduce
-   (fn reducer [acc d]
-     (if (vector? d)
-       (str acc (first d))
-       (str acc d)))
-   "" (-> dofida-play :scripts (get 1) (get 1)))
+  (inject-facts!
+   [::time/now {::tick-length 0.02
+                ::play dofida-play
+                ::play-progress 0}])
 
-  (mutate-world!
-   (fn [world]
-     (-> world
-         (esse ::time/now {::tick-length 0.02
-                           ::play dofida-play
-                           ::play-progress 0}))))
-
-  (mutate-world!
-   (fn [world]
-     (-> world
-         (esse ::time/now {::control ::next-dialogue}))))
+  (inject-facts! [::time/now {::control ::next-dialogue}])
 
   :-)
