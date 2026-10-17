@@ -21,6 +21,24 @@
 
     :else (str dialogue)))
 
+(defn merge-two-dialogue [a b]
+  (letfn [(ensure-vec [dialogue]
+            (if (vector? dialogue) dialogue [dialogue]))]
+    (into (ensure-vec a) (ensure-vec b))))
+
+(defn count-dialogue [dialogue]
+  (cond
+    (string? dialogue) (count dialogue)
+  
+    (vector? dialogue)
+    (reduce (fn dialouge-reducer [acc d]
+              (if (vector? d)
+                (+ acc (count (first d)))
+                (+ acc (count d))))
+            0 dialogue)
+  
+    :else (count (str dialogue))))
+
 (def rules
   (o/ruleset
    {::dialogue-tick
@@ -39,16 +57,23 @@
     [:what
      [::time/now ::play the-play]
      [::time/now ::play-progress play-progress]
+     [::time/now ::dialogue prev-dialogue {:then false}]
      :then
-     (let [{:keys [players scripts]} the-play
-           [player-key dialogue & attributes] (get scripts play-progress)
-           player     (get players player-key)
-           _attrs-set (set attributes)]
+     (let [{:keys [players 
+                   scripts]} the-play
+           [player-key 
+            dialogue
+            & attributes]    (get scripts play-progress)
+           player            (get players player-key)
+           attrs-set         (set attributes)
+           dialogue          (if (:+ attrs-set) (merge-two-dialogue prev-dialogue dialogue) dialogue)
+           dialogue-progress (if (:+ attrs-set) (count-dialogue prev-dialogue) 0)]
+       (tap> dialogue)
        (s-> session
-            (o/insert ::time/now {::player player
-                                  ::dialogue dialogue
-                                  ::dialogue-progress 0})))]
-    
+            (o/insert ::time/now {::player            player
+                                  ::dialogue          dialogue
+                                  ::dialogue-progress dialogue-progress})))]
+
     ::next-dialogue
     [:what
      [esse-id ::control ::next-dialogue]
@@ -88,12 +113,12 @@
              :nf {:name "noifasui"}}
    :effects {:funky (fn [])}
    :scripts [[:d "oh."]
-             [:d ["so this is " ["existence." :funky]] :+]
+             [:d [" so this is " ["existence." :funky]] :+]
              [:d "for a language named jank,"]
              [:d "this doesn't feel janky at all."]
              [:nf "this is not jank"]
-             [:d "WHAT?" :+ :camera-shake]
-             [:d "What do you mean this is not jank?!"]
+             [:d "WHAT?" :camera-shake]
+             [:d "What do you mean this is not jank?!" :+]
              [:nf "This is ClojureScript"]]})
 
 (comment
@@ -103,6 +128,8 @@
 
   (inject-facts!
    [::time/now {::tick-length 0.02
+                ::dialogue ""
+                ::dialogue-progress 0
                 ::play dofida-play
                 ::play-progress 0}])
 
