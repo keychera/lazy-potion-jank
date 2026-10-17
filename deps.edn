@@ -1,5 +1,5 @@
 {:paths ["src"]
- :deps {io.github.keychera/odoyle-rules {:git/sha "15c5f2cc0905cf54bd76db627f2114721cf75e32"}}
+ :deps {io.github.keychera/odoyle-rules {:git/sha "8a866a219d09d366bc41466b8a904336ebb6867a"}}
  :jank {:include-dirs [".libs/SDL3-3.4.2/x86_64-w64-mingw32/include"
                        ".libs/SDL3_image-3.4.0/x86_64-w64-mingw32/include"
                        ".libs/SDL3_ttf-3.2.2/x86_64-w64-mingw32/include"

@@ -3,8 +3,6 @@
    [bermain.sdl3.sdl3 :as sdl3]))
 
 (defonce stop-atom (atom false))
-(defonce refresh-atom (atom false))
-
 (defn toggle-stop []
   ;; encountered this bug regarding this defn
   ;; https://clojurians.slack.com/archives/C03SRH97FDK/p1789329083393359
@@ -12,11 +10,7 @@
     "stopping game..."
     "starting game!"))
 
-(defn refresh []
-  (reset! refresh-atom true)
-  "refreshing game...")
-
-(defn dev [& _]
+(defn dev []
   (future
     (while true
       (try
@@ -26,12 +20,9 @@
         (catch cpp/jank.runtime.object_ref e
           (println :caught e))))))
 
-(dev)
+(defonce _ (dev))
 
 (comment
   (toggle-stop)
-  (refresh)
-
-  (dev)
 
   ::waiting-for-something-to-happen?)

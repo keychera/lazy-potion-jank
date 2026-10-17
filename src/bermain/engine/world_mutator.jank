@@ -1,0 +1,37 @@
+(ns bermain.engine.world-mutator
+  (:require
+   [bermain.engine.macros :refer [s->]]
+   [bermain.engine.time :as time]
+   [bermain.engine.world :as world :refer [esse]]
+   [odoyle.rules :as o]))
+
+(defonce world-mutator (atom nil))
+
+(defn mutate-world! [mutate-fn]
+  ;; this is not swap! by design!
+ ;;  it supposed to hold an (fn [world] world)
+  ;; then the atom will be polled by ::world-mutator and consumed once
+  (reset! world-mutator mutate-fn))
+
+(defn init-fn [world _game]
+  (esse world ::time/now {::world-mutator world-mutator}))
+
+(def rules
+  (o/ruleset
+   {::world-mutator
+    [:what
+     [::time/now ::time/delta dt]
+     [::time/now ::world-mutator world-mutator]
+     :then
+     (when-let [mutator-fn @world-mutator]
+       (reset! world-mutator nil)
+       (s-> (mutator-fn session)))]}))
+
+(defn put-into-debug-tap [x]
+  #_{:clj-kondo/ignore [:inline-def]}
+  (def debug-tap x))
+
+(defn get-system []
+  (add-tap put-into-debug-tap)
+  {::world/init-fn init-fn
+   ::world/rules rules})

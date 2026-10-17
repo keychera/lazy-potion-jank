@@ -2,40 +2,17 @@
   (:require
    [odoyle.rules :as o]))
 
-(defn prepare-world [world game all-rules init-fns before-refresh-fns]
-  (let [world   (if world
-                  (reduce (fn [w' before-fn] (before-fn w' game))
-                          world before-refresh-fns)
-                  (o/->session))
-        world'  (reduce o/add-rule world all-rules)
-        world'' (reduce (fn [w' init-fn] (init-fn w' game))
-                        world' init-fns)]
-    world''))
+(defn prepare-world [game all-rules init-fns]
+  (let [world  (reduce o/add-rule (o/->session) all-rules)
+        world' (reduce (fn [w' init-fn] (init-fn w' game)) world init-fns)]
+    world'))
 
 (defn init-world [game system-coll]
   (let [systems    (into [] (mapcat (fn [sys] (if (vector? sys) sys [sys]))) system-coll)
         all-rules  (into [] (mapcat ::rules) systems)
-        init-fns   (into [] (comp (map ::init-fn) (filter some?)) systems)
-        after-fns  (into [] (comp (map ::after-refresh) (filter some?)) systems)
-        before-fns (into [] (comp (map ::before-refresh) (filter some?)) systems)]
-    (assoc (update game ::this prepare-world game all-rules init-fns before-fns)
-           ::init-fns init-fns
-           ::after-refresh-fns after-fns
-           ::before-refresh-fns before-fns)))
-
-(defn after-refresh
-  "after-refresh world. this only makes sense in REPL dev.
-   in normal runtime, this is just another init-fn"
-  [{::keys [after-refresh-fns] :as game}]
-  (reduce (fn [game' after-refresh-fn] (update game' ::this after-refresh-fn game'))
-          game after-refresh-fns))
-
-(defn before-refresh
-  "before-refresh world. this only makes sense in REPL dev.
-   in normal runtime, this is like on-destroy"
-  [{::keys [before-refresh-fns] :as game}]
-  (reduce (fn [game' before-refresh-fn] (update game' ::this before-refresh-fn game'))
-          game before-refresh-fns))
+        init-fns   (into [] (comp (map ::init-fn) (filter some?)) systems)]
+    (assoc (assoc game ::this (prepare-world game all-rules init-fns))
+           ::init-fns init-fns)))
 
 (defn esse
   "insert an esse given the facts in the shape of maps of attr->value.

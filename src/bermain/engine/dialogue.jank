@@ -8,23 +8,13 @@
 
 (def rules
   (o/ruleset
-   {::world-mutator
-    [:what
-     [::time/now ::time/delta dt]
-     [::time/now ::world-mutator world-mutator]
-     :then
-     (when-let [mutator-fn @world-mutator]
-       (reset! world-mutator nil)
-       (s-> (mutator-fn session)))]
-
-    ::dialogue-tick
+   {::dialogue-tick
     [:what
      [::time/now ::time/delta dt]
      [::time/now ::tick-length tick-length {:then false}]
      [::time/now ::tick-progress tick-progress {:then false}]
      [::time/now ::tick tick {:then false}]
      :then
-     (tap> [tick-progress dt (< tick-progress tick-length)])
      (if (< tick-progress tick-length)
        (s-> session (o/insert ::time/now ::tick-progress (+ tick-progress dt)))
        (s-> session (o/insert ::time/now {::tick-progress 0
@@ -38,14 +28,9 @@
      :then
      (s-> session (o/insert esse-id ::progress (inc progress)))]}))
 
-
-(defonce world-mutator (atom nil))
-
 (defn init-fn [world _game]
   (-> world
-      (esse ::time/now {::world-mutator world-mutator
-                        ::tick 0
-                        ::tick-progress 0})
+      (esse ::time/now {::tick 0 ::tick-progress 0})
       (esse :one {::dialogue "hello jank!" ::progress 5})))
 
 (defn render!
@@ -71,14 +56,14 @@
    ::world/rules rules})
 
 (comment
+  (require '[bermain.engine.world-mutator :refer [mutate-world! debug-tap]])
 
-  (add-tap #(def debug %))
-  debug
+  debug-tap
 
-  (reset! world-mutator
-          (fn [world]
-            (-> world
-                (esse ::time/now {::tick-length 0.05})
-                (esse :one {::dialogue "hello jank!" ::progress -1}))))
+  (mutate-world!
+   (fn [world]
+     (-> world
+         (esse ::time/now {::tick-length 0.05})
+         (esse :one {::dialogue "hello jank!" ::progress -1}))))
 
   :-)

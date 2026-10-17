@@ -1,8 +1,12 @@
 (ns bermain.engine.systems
   (:require
    [bermain.engine.dialogue :as dialogue]
-   [bermain.engine.time :as time]))
+   [bermain.engine.time :as time]
+   [bermain.engine.world-mutator :as world-mutator]))
 
 (defn get-all []
   [(time/get-system)
-   (dialogue/get-system)])
+   (dialogue/get-system)
+   
+   #_dev
+   (world-mutator/get-system)])
