@@ -7,6 +7,20 @@
    [bermain.sdl3.text :as text]
    [odoyle.rules :as o]))
 
+(defn dialogue->string [dialogue]
+  (cond
+    (string? dialogue)
+    dialogue
+
+    (vector? dialogue)
+    (reduce (fn dialouge-reducer [acc d]
+              (if (vector? d)
+                (str acc (first d))
+                (str acc d)))
+            "" dialogue)
+
+    :else (str dialogue)))
+
 (def rules
   (o/ruleset
    {::dialogue-tick
@@ -21,41 +35,90 @@
        (s-> session (o/insert ::time/now {::tick-progress 0
                                           ::tick (inc tick)})))]
 
+    ::dialogue-play
+    [:what
+     [::time/now ::play the-play]
+     [::time/now ::play-progress play-progress]
+     :then
+     (let [{:keys [players scripts]} the-play
+           [player-key dialogue & attributes] (get scripts play-progress)
+           player     (get players player-key)
+           _attrs-set (set attributes)]
+       (s-> session
+            (o/insert ::time/now {::player player
+                                  ::dialogue dialogue
+                                  ::dialogue-progress 0})))]
+    
+    ::next-dialogue
+    [:what
+     [esse-id ::control ::next-dialogue]
+     [esse-id ::play-progress play-progress {:then false}]
+     :then (s-> session (o/insert esse-id ::play-progress (inc play-progress)))]
+
     ::animate-dialogue
     [:what
      [::time/now ::tick tick]
+     [esse-id ::player player]
      [esse-id ::dialogue dialogue]
-     [esse-id ::progress progress {:then false}]
+     [esse-id ::dialogue-progress progress {:then false}]
      :then
-     (s-> session (o/insert esse-id ::progress (inc progress)))]}))
+     (s-> session (o/insert esse-id ::dialogue-progress (inc progress)))]}))
 
 (defn init-fn [world _game]
   (-> world
       (esse ::time/now {::tick 0 ::tick-progress 0})
-      (esse :one {::dialogue "hello jank!" ::progress 5})))
+      (esse :one {::dialogue "hello jank!" ::dialogue-progress 0})))
 
 (defn render!
   [{world ::world/this :as game}]
   (when-let [{:keys [dialogue progress]} (utils/query-one world ::animate-dialogue)]
-    (let [dialogue (subs dialogue 0 (min (max progress 0) (count dialogue)))
-          text     (doto (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
-                     (cpp/TTF_SetTextString dialogue 0)
-                     (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE))]
+    (let [dialogue-str (dialogue->string dialogue)
+          dialogue     (subs dialogue-str 0 (min (max progress 0) (count dialogue-str)))
+          text         (doto (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
+                         (cpp/TTF_SetTextString dialogue 0)
+                         (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE))]
       (cpp/TTF_DrawRendererText text 120.0 240.0))))
 
 (defn get-system []
   {::world/init-fn init-fn
    ::world/rules rules})
 
+(def dofida-play
+  {:players {:d  {:name "dofida"}
+             :nf {:name "noifasui"}}
+   :effects {:funky (fn [])}
+   :scripts [[:d "oh."]
+             [:d ["so this is " ["existence." :funky]] :+]
+             [:d "for a language named jank,"]
+             [:d "this doesn't feel janky at all."]
+             [:nf "this is not jank"]
+             [:d "WHAT?" :+ :camera-shake]
+             [:d "What do you mean this is not jank?!"]
+             [:nf "This is ClojureScript"]]})
+
 (comment
   (require '[bermain.engine.world-mutator :refer [mutate-world! debug-tap]])
 
   debug-tap
 
+  (dialogue->string (-> dofida-play :scripts (get 1) (get 1)))
+  (reduce
+   (fn reducer [acc d]
+     (if (vector? d)
+       (str acc (first d))
+       (str acc d)))
+   "" (-> dofida-play :scripts (get 1) (get 1)))
+
   (mutate-world!
    (fn [world]
      (-> world
-         (esse ::time/now {::tick-length 0.05})
-         (esse :one {::dialogue "hello jank!" ::progress -1}))))
+         (esse ::time/now {::tick-length 0.02
+                           ::play dofida-play
+                           ::play-progress 0}))))
+
+  (mutate-world!
+   (fn [world]
+     (-> world
+         (esse ::time/now {::control ::next-dialogue}))))
 
   :-)
