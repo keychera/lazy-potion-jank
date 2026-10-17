@@ -3,44 +3,36 @@
    "cmath"
    "SDL3_ttf/SDL_ttf.h")
   (:require
-   [bermain.engine.anime :as anime]
    [bermain.sdl3.error :refer [must-be-true must-be-some]]))
+
+;; resource
+;; https://github.com/libsdl-org/SDL_ttf/blob/main/examples/showfps.c
 
 (defn init [game]
   (must-be-true (cpp/TTF_Init))
 
-  (let [ttf-font (must-be-some (cpp/TTF_OpenFont "res/fonts/CardboardCrown/CardboardCrown.ttf" 32))]
-    (assoc game ::ttf-font (cpp/box ttf-font))))
+  (let [renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
+        engine   (must-be-some (cpp/TTF_CreateRendererTextEngine renderer))
+        font     (must-be-some (cpp/TTF_OpenFont "res/fonts/CardboardCrown/CardboardCrown.ttf" 32))
+        text     (must-be-some (cpp/TTF_CreateText engine font "empty" 0))]
+    (assoc game 
+           ::engine (cpp/box engine)
+           ::font   (cpp/box font)
+           ::text   (cpp/box text))))
 
 (def message "Hello jank + SDL3_ttf!")
 
 (defn render! [game]
-  (let [factor   (int (* 200 (/ (::anime/timer game) anime/anime-duration)))
-        black    (cpp/SDL_Color 0 0 0 0)
-        renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
-        font     (cpp/unbox (:* cpp/TTF_Font) (::ttf-font game))
-        surface  (cpp/TTF_RenderText_Blended font message (count message) black)
-        texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
-        player   (:player game)
-        scale    1.0
-        dst-rect (cpp/SDL_FRect (:x player) (+ (:y player) 60)
-                                (* scale 300.0) (* scale 33.0))]
-    #_{:clj-kondo/ignore [:inline-def]}
-    (def debug factor)
-    (cpp/SDL_DestroySurface surface)
-    (cpp/SDL_RenderTexture renderer texture cpp/nullptr (cpp/& dst-rect))
-    (cpp/SDL_DestroyTexture texture)))
+  (let [text   (doto (cpp/unbox (:* cpp/TTF_Text) (::text game))
+                 (cpp/TTF_SetTextString message 0)
+                 (cpp/TTF_SetTextColor 0 0 0 cpp/SDL_ALPHA_OPAQUE))
+        player (:player game)]
+    (cpp/TTF_DrawRendererText text (:x player) (+ (:y player) 60))))
 
-(comment
-
-  (cpp/sin (float debug))
-
-  (cpp/sin 1)
-
-  ;; wrong type passed to cpp/sin will kill repl
-  ;; above is wrong, (cpp/sin 1) still runs, the (def debug 1) then (cpp/sin debug) throws
-  (try (cpp/sin debug)
-       (catch cpp/jank.runtime.object_ref e
-         (println :caught e)))
-
-  :-)
+(defn clean! [game]
+  (let [text   (cpp/unbox (:* cpp/TTF_Text) (::text game))
+        engine (cpp/unbox (:* cpp/TTF_TextEngine) (::engine game))
+        font   (cpp/unbox (:* cpp/TTF_Font) (::font game))]
+    (cpp/TTF_DestroyText text)
+    (cpp/TTF_DestroyRendererTextEngine engine)
+    (cpp/TTF_CloseFont font)))

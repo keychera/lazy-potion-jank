@@ -4,6 +4,7 @@
    [bermain.engine.time :as time]
    [bermain.engine.utils :as utils]
    [bermain.engine.world :as world :refer [esse]]
+   [bermain.sdl3.text :as text]
    [odoyle.rules :as o]))
 
 (def rules
@@ -34,22 +35,13 @@
       (esse :one {::dialogue "hello jank!" ::progress 5})))
 
 (defn render!
-  [{world ::world/this}
-   ^(:* cpp/SDL_Renderer) renderer
-   ^(:* cpp/TTF_Font) font]
+  [{world ::world/this :as game}]
   (when-let [{:keys [dialogue progress]} (utils/query-one world ::animate-dialogue)]
-    (let [black    (cpp/SDL_Color 255 255 255 255)
-          w        (cpp/int)
-          h        (cpp/int)
-          dialogue (subs dialogue 0 (min (max progress 0) (count dialogue)))
-          _        (cpp/TTF_GetStringSize font dialogue (count dialogue) (cpp/& w) (cpp/& h))
-          surface  (cpp/TTF_RenderText_Blended font dialogue (count dialogue) black)
-          texture  (cpp/SDL_CreateTextureFromSurface renderer surface)
-          dst-rect (cpp/SDL_FRect 120.0 240.0 w h)]
-
-      (cpp/SDL_DestroySurface surface)
-      (cpp/SDL_RenderTexture renderer texture cpp/nullptr (cpp/& dst-rect))
-      (cpp/SDL_DestroyTexture texture))))
+    (let [dialogue (subs dialogue 0 (min (max progress 0) (count dialogue)))
+          text     (doto (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
+                     (cpp/TTF_SetTextString dialogue 0)
+                     (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE))]
+      (cpp/TTF_DrawRendererText text 120.0 240.0))))
 
 (defn get-system []
   {::world/init-fn init-fn

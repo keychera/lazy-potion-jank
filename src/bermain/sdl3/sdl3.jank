@@ -68,12 +68,12 @@
 
            (image/render! game)
            (text/render! game)
-           (when-let [font (::text/ttf-font game)]
-             (dialogue/render! game (cpp/box sdl-renderer) font))
+           (dialogue/render! game)
 
            (cpp/SDL_RenderPresent sdl-renderer)
            (recur game'))
          (doto game
+           (text/clean!)
            (image/clean!)
            (mixer/clean!)
            (error/clean!)
