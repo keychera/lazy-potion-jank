@@ -2,5 +2,10 @@
   (:require
    [odoyle.rules :as o]))
 
+(defmacro s->
+  "Thread like `->` but always ends with (odoyle.rules/reset!)."
+  [x & forms]
+  `(-> ~x ~@forms o/reset!))
+
 (defn query-one [odoyle-session rule-name]
   (first (o/query-all odoyle-session rule-name)))

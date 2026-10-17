@@ -1,7 +1,0 @@
-(ns bermain.engine.macros
-  (:require [odoyle.rules :as o]))
-
-(defmacro s->
-  "Thread like `->` but always ends with (odoyle.rules/reset!)."
-  [x & forms]
-  `(-> ~x ~@forms o/reset!))

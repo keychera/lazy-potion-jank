@@ -1,8 +1,7 @@
 (ns bermain.engine.dialogue
   (:require
-   [bermain.engine.macros :refer [s->]]
    [bermain.engine.time :as time]
-   [bermain.engine.utils :as utils]
+   [bermain.engine.utils :refer [query-one s->]]
    [bermain.engine.world :as world :refer [esse]]
    [bermain.sdl3.text :as text]
    [odoyle.rules :as o]))
@@ -29,14 +28,14 @@
 (defn count-dialogue [dialogue]
   (cond
     (string? dialogue) (count dialogue)
-  
+
     (vector? dialogue)
     (reduce (fn dialouge-reducer [acc d]
               (if (vector? d)
                 (+ acc (count (first d)))
                 (+ acc (count d))))
             0 dialogue)
-  
+
     :else (count (str dialogue))))
 
 (def rules
@@ -59,9 +58,9 @@
      [::time/now ::play-progress play-progress]
      [::time/now ::dialogue prev-dialogue {:then false}]
      :then
-     (let [{:keys [players 
+     (let [{:keys [players
                    scripts]} the-play
-           [player-key 
+           [player-key
             dialogue
             & attributes]    (get scripts play-progress)
            player            (get players player-key)
@@ -96,7 +95,7 @@
 
 (defn render!
   [{world ::world/this :as game}]
-  (when-let [{:keys [dialogue progress]} (utils/query-one world ::animate-dialogue)]
+  (when-let [{:keys [dialogue progress]} (query-one world ::animate-dialogue)]
     (let [dialogue-str (dialogue->string dialogue)
           dialogue     (subs dialogue-str 0 (min (max progress 0) (count dialogue-str)))
           text         (doto (cpp/unbox (:* cpp/TTF_Text) (::text/text game))

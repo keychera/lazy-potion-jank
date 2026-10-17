@@ -1,6 +1,6 @@
 (ns bermain.engine.world-mutator
   (:require
-   [bermain.engine.macros :refer [s->]]
+   [bermain.engine.utils :refer [s->]]
    [bermain.engine.time :as time]
    [bermain.engine.world :as world :refer [esse]]
    [odoyle.rules :as o]))
