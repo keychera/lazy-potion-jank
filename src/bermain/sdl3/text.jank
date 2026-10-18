@@ -15,24 +15,13 @@
         engine   (must-be-some (cpp/TTF_CreateRendererTextEngine renderer))
         font     (must-be-some (cpp/TTF_OpenFont "res/fonts/CardboardCrown/CardboardCrown.ttf" 32))
         text     (must-be-some (cpp/TTF_CreateText engine font "empty" 0))]
-    (assoc game 
+    (assoc game
            ::engine (cpp/box engine)
            ::font   (cpp/box font)
            ::text   (cpp/box text))))
 
-(def message "Hello jank + SDL3_ttf!")
-
-(defn render! [game]
-  (let [text   (doto (cpp/unbox (:* cpp/TTF_Text) (::text game))
-                 (cpp/TTF_SetTextString message 0)
-                 (cpp/TTF_SetTextColor 0 0 0 cpp/SDL_ALPHA_OPAQUE))
-        player (:player game)]
-    (cpp/TTF_DrawRendererText text (:x player) (+ (:y player) 60))))
-
-(defn clean! [game]
-  (let [text   (cpp/unbox (:* cpp/TTF_Text) (::text game))
-        engine (cpp/unbox (:* cpp/TTF_TextEngine) (::engine game))
-        font   (cpp/unbox (:* cpp/TTF_Font) (::font game))]
-    (cpp/TTF_DestroyText text)
-    (cpp/TTF_DestroyRendererTextEngine engine)
-    (cpp/TTF_CloseFont font)))
+(defn clean! [{:keys [::text ::engine ::font]}]
+  (when text (cpp/TTF_DestroyText (cpp/unbox (:* cpp/TTF_Text) text)))
+  (when engine (cpp/TTF_DestroyRendererTextEngine (cpp/unbox (:* cpp/TTF_TextEngine) engine)))
+  (when font (cpp/TTF_CloseFont (cpp/unbox (:* cpp/TTF_Font) font)))
+  (cpp/TTF_Quit))

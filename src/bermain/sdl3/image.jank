@@ -35,6 +35,5 @@
     (render-9-panel! game)
     (cpp/SDL_RenderTexture renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))))
 
-(defn clean! [game]
-  (let [potion-tex (cpp/unbox (:* cpp/SDL_Texture) (::potion-tex game))]
-    (cpp/SDL_DestroyTexture potion-tex)))
+(defn clean! [{:keys [::potion-tex]}]
+  (when potion-tex (cpp/SDL_DestroyTexture (cpp/unbox (:* cpp/SDL_Texture) potion-tex))))
