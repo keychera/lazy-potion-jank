@@ -1,25 +1,71 @@
 (ns bermain.engine.audio
+  (:include
+   "SDL3_mixer/SDL_mixer.h")
   (:require
+   [bermain.engine.time :as time]
    [bermain.engine.utils :refer [query-one]]
    [bermain.engine.world :as world]
-   [odoyle.rules :as o]
-   [bermain.sdl3.mixer :as mixer]))
+   [bermain.sdl3.error :refer [must-be-some must-be-true]]
+   [odoyle.rules :as o]))
+
+(defn playing? [^(:* cpp/MIX_Track) track]
+  (cpp/MIX_TrackPlaying track))
+
+(defn set-track [^(:* cpp/MIX_Track) track ^(:* cpp/MIX_Audio) audio]
+  (cpp/MIX_SetTrackAudio track audio))
+
+(defn play [^(:* cpp/MIX_Track) track]
+  (cpp/MIX_PlayTrack track 0))
+
+(defn init [game]
+  (must-be-true (cpp/MIX_Init))
+
+  (let [mixer          (must-be-some (cpp/MIX_CreateMixerDevice cpp/SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK cpp/nullptr))
+        dialogue-sfx   (cpp/box (must-be-some (cpp/MIX_LoadAudio mixer "res/click2.ogg" true)))
+        bgm            (cpp/box (must-be-some (cpp/MIX_LoadAudio mixer "res/pixelspheremegamix.ogg" true)))
+        bgm-track      (cpp/box (must-be-some (cpp/MIX_CreateTrack mixer)))
+        sfx-track-pool (letfn [(create-dialogue-sfx-track []
+                                 (let [sfx-track (cpp/box (must-be-some (cpp/MIX_CreateTrack mixer)))]
+                                   (set-track sfx-track dialogue-sfx)
+                                   sfx-track))]
+                         (vec (take 4 (repeatedly create-dialogue-sfx-track))))]
+    (set-track bgm-track bgm)
+    (play bgm-track)
+    (assoc game
+           ::bgm-track bgm-track
+           ::sfx-track-pool sfx-track-pool
+           ::time-last-sfx-played 0)))
+
+(defn play-tututu
+  [{:keys [::sfx-track-pool ::time-last-sfx-played]
+    current ::time/total :as game}]
+  (if (> (- current time-last-sfx-played) 0.1)
+    (do (when-let [sfx-track (first (remove playing? sfx-track-pool))]
+          (play sfx-track))
+        (assoc game ::time-last-sfx-played current))
+    game))
+
+(defn clean! [_game]
+  (cpp/MIX_Quit))
 
 (def rules
   (o/ruleset
-   {::play-tututu
+   {::play-bgm-a
+    [:what [esse-id ::play-tututu true]]
+
+    ::play-tututu
     [:what [esse-id ::play-tututu true]]}))
 
 (defn render
   [{world ::world/this :as game}]
   (if (query-one world ::play-tututu)
-    (mixer/play-tututu game)
+    (play-tututu game)
     game))
 
 (defn get-system []
   {::world/rules rules})
 
-(comment 
+(comment
   (require '[bermain.engine.world-mutator :refer [inject-facts!]])
 
   (inject-facts! [:any {::play-tututu false}])
