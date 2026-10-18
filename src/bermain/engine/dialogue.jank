@@ -1,5 +1,6 @@
 (ns bermain.engine.dialogue
   (:require
+   [bermain.engine.audio :as audio]
    [bermain.engine.time :as time]
    [bermain.engine.utils :refer [query-one s->]]
    [bermain.engine.world :as world :refer [esse]]
@@ -58,35 +59,38 @@
      [::time/now ::play-progress play-progress]
      [::time/now ::dialogue prev-dialogue {:then false}]
      :then
-     (let [{:keys [players
-                   scripts]} the-play
-           [player-key
-            dialogue
-            & attributes]    (get scripts play-progress)
-           player            (get players player-key)
-           attrs-set         (set attributes)
-           dialogue          (if (:+ attrs-set) (merge-two-dialogue prev-dialogue dialogue) dialogue)
-           dialogue-progress (if (:+ attrs-set) (count-dialogue prev-dialogue) 0)]
-       (tap> dialogue)
-       (s-> session
-            (o/insert ::time/now {::player            player
-                                  ::dialogue          dialogue
-                                  ::dialogue-progress dialogue-progress})))]
+     (let [{:keys [players scripts]} the-play]
+       (when-let [[player-key dialogue & attributes] (get scripts play-progress)]
+         (let [player            (get players player-key)
+               attrs-set         (set attributes)
+               dialogue          (if (:+ attrs-set) (merge-two-dialogue prev-dialogue dialogue) dialogue)
+               dialogue-progress (if (:+ attrs-set) (count-dialogue prev-dialogue) 0)]
+           (s-> session
+                (o/insert ::time/now
+                          {::player            player
+                           ::dialogue          dialogue
+                           ::dialogue-length   (count-dialogue dialogue)
+                           ::dialogue-progress dialogue-progress})))))]
 
     ::next-dialogue
     [:what
      [esse-id ::control ::next-dialogue]
      [esse-id ::play-progress play-progress {:then false}]
-     :then (s-> session (o/insert esse-id ::play-progress (inc play-progress)))]
+     :then
+     (s-> session (o/insert esse-id {::play-progress (inc play-progress)}))]
 
     ::animate-dialogue
     [:what
      [::time/now ::tick tick]
      [esse-id ::player player]
      [esse-id ::dialogue dialogue]
+     [esse-id ::dialogue-length dialogue-length]
      [esse-id ::dialogue-progress progress {:then false}]
      :then
-     (s-> session (o/insert esse-id ::dialogue-progress (inc progress)))]}))
+     (when (<= progress dialogue-length)
+       (s-> session
+            (o/insert esse-id ::dialogue-progress (inc progress))
+            (o/insert :dialogue ::audio/play-tututu (< progress dialogue-length))))]}))
 
 (defn init-fn [world _game]
   (-> world
@@ -95,21 +99,28 @@
 
 (defn render!
   [{world ::world/this :as game}]
-  (when-let [{:keys [dialogue progress]} (query-one world ::animate-dialogue)]
+  (when-let [{:keys [player dialogue progress]} (query-one world ::animate-dialogue)]
     (let [dialogue-str (dialogue->string dialogue)
           dialogue     (subs dialogue-str 0 (min (max progress 0) (count dialogue-str)))
-          text         (doto (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
-                         (cpp/TTF_SetTextString dialogue 0)
-                         (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE))]
-      (cpp/TTF_DrawRendererText text 120.0 240.0))))
+          text         (cpp/unbox (:* cpp/TTF_Text) (::text/text game))]
+      (doto text
+        (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE)
+
+        (cpp/TTF_SetTextString (-> player :name) 0)
+        (cpp/TTF_DrawRendererText 60.0 240.0)
+
+        (cpp/TTF_SetTextString dialogue 0)
+        (cpp/TTF_DrawRendererText 60.0 280.0))
+      :done)))
 
 (defn get-system []
   {::world/init-fn init-fn
    ::world/rules rules})
 
-(def dofida-play
-  {:players {:d  {:name "dofida"}
-             :nf {:name "noifasui"}}
+(def jank-play
+  {:players {:NA {:name "NARRATOR"}
+             :d  {:name "Dofida"}
+             :nf {:name "Noifasui"}}
    :effects {:funky (fn [])}
    :scripts [[:d "oh."]
              [:d [" so this is " ["existence." :funky]] :+]
@@ -117,8 +128,9 @@
              [:d "this doesn't feel janky at all."]
              [:nf "this is not jank"]
              [:d "WHAT?" :camera-shake]
-             [:d "What do you mean this is not jank?!" :+]
-             [:nf "This is ClojureScript"]]})
+             [:d " What do you mean this is not jank?!" :+]
+             [:nf "This is ClojureScript"]
+             [:NA "This man is lying for dramatic effect"]]})
 
 (comment
   (require '[bermain.engine.world-mutator :refer [inject-facts! debug-tap]])
@@ -129,7 +141,7 @@
    [::time/now {::tick-length 0.02
                 ::dialogue ""
                 ::dialogue-progress 0
-                ::play dofida-play
+                ::play jank-play
                 ::play-progress 0}])
 
   (inject-facts! [::time/now {::control ::next-dialogue}])

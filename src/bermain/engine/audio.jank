@@ -1,0 +1,27 @@
+(ns bermain.engine.audio
+  (:require
+   [bermain.engine.utils :refer [query-one]]
+   [bermain.engine.world :as world]
+   [odoyle.rules :as o]
+   [bermain.sdl3.mixer :as mixer]))
+
+(def rules
+  (o/ruleset
+   {::play-tututu
+    [:what [esse-id ::play-tututu true]]}))
+
+(defn render
+  [{world ::world/this :as game}]
+  (if (query-one world ::play-tututu)
+    (mixer/play-tututu game)
+    game))
+
+(defn get-system []
+  {::world/rules rules})
+
+(comment 
+  (require '[bermain.engine.world-mutator :refer [inject-facts!]])
+
+  (inject-facts! [:any {::play-tututu false}])
+
+  :-)

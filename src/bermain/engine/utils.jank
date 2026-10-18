@@ -7,5 +7,7 @@
   [x & forms]
   `(-> ~x ~@forms o/reset!))
 
-(defn query-one [odoyle-session rule-name]
+(defn query-one 
+  "o/query-all with assumption that it only match either one or zero match" 
+  [odoyle-session rule-name]
   (first (o/query-all odoyle-session rule-name)))

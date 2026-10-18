@@ -17,7 +17,8 @@
   (mutate-world!
    (fn [world]
      (reduce (fn [w [id attr->value]] (o/insert w id attr->value))
-             world facts))))
+             world facts)))
+  (str "inserted " (count (into [] (mapcat second) facts)) " fact(s)"))
 
 (defn init-fn [world _game]
   (esse world ::time/now {::world-mutator world-mutator}))
