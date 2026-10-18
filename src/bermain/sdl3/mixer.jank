@@ -2,20 +2,38 @@
   (:include
    "SDL3_mixer/SDL_mixer.h")
   (:require
-   [bermain.sdl3.error :refer [must-be-true must-be-some]]))
+   [bermain.engine.time :as time]
+   [bermain.sdl3.error :refer [must-be-some must-be-true]]))
 
 (defn init [game]
   (must-be-true (cpp/MIX_Init))
 
   (let [mixer (must-be-some (cpp/MIX_CreateMixerDevice cpp/SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK cpp/nullptr))
-        audio (must-be-some (cpp/MIX_LoadAudio mixer "res/switch11.ogg" true))
-        track (must-be-some (cpp/MIX_CreateTrack mixer))]
-    (cpp/MIX_SetTrackAudio track audio)
-    (assoc game ::track (cpp/box track))))
+        audio (must-be-some (cpp/MIX_LoadAudio mixer "res/click2.ogg" true))
+        track-pool (vec (take 16 (repeatedly #(cpp/box (must-be-some (cpp/MIX_CreateTrack mixer))))))]
+    (assoc game
+           ::audio-a (cpp/box audio)
+           ::track-pool track-pool
+           ::time-last-played 0)))
 
-(defn play-that-track! [game]
-  (let [track (cpp/unbox (:* cpp/MIX_Track) (::track game))]
-    (cpp/MIX_PlayTrack track 0)))
+(defn playing? [^(:* cpp/MIX_Track) track]
+  (cpp/MIX_TrackPlaying track))
+
+(defn set-track [^(:* cpp/MIX_Track) track ^(:* cpp/MIX_Audio) audio]
+  (cpp/MIX_SetTrackAudio track audio))
+
+(defn play [^(:* cpp/MIX_Track) track]
+  (cpp/MIX_PlayTrack track 0))
+
+(defn play-tututu
+  [{:keys [::track-pool ::audio-a ::time-last-played]
+    current ::time/total :as game}]
+  (if (> (- current time-last-played) 0.1)
+    (do (when-let [track (first (remove playing? track-pool))]
+          (set-track track audio-a)
+          (play track))
+        (assoc game ::time-last-played current))
+    game))
 
 (defn clean! [_game]
   (cpp/MIX_Quit))

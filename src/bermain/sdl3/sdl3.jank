@@ -100,7 +100,7 @@
     (cond-> game
       (::input/a pressed?)     (update-in [:player :x] - move)
       (::input/d pressed?)     (update-in [:player :x] + move)
-      (::input/space pressed?) (doto (mixer/play-that-track!)))))
+      (::input/space pressed?) (mixer/play-tututu))))
 
 (defn clean! [{:keys [sdl-renderer sdl-window]}]
   (when sdl-renderer (cpp/SDL_DestroyRenderer (cpp/unbox (:* cpp/SDL_Renderer) sdl-renderer)))
