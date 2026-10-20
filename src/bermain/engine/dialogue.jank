@@ -7,19 +7,31 @@
    [bermain.sdl3.text :as text]
    [odoyle.rules :as o]))
 
-(defn dialogue->string [dialogue]
+(defn dialogue->piece 
+  [^(:* cpp/TTF_TextEngine) engine
+   ^(:* cpp/TTF_Font) font 
+   dialogue-str]
+  (let [TTF_Text (cpp/TTF_CreateText engine font dialogue-str 0)
+        w (cpp/int) h (cpp/int)
+        _        (cpp/TTF_GetTextSize TTF_Text (cpp/& w) (cpp/& h))]
+    {:TTF_Text (cpp/box TTF_Text)
+     :dialogue dialogue-str
+     :length   (count dialogue-str)
+     :text-w   w}))
+
+(defn break-dialogues [engine font dialogue]
   (cond
     (string? dialogue)
-    dialogue
+    [(dialogue->piece engine font dialogue)]
 
     (vector? dialogue)
     (reduce (fn dialouge-reducer [acc d]
               (if (vector? d)
-                (str acc (first d))
-                (str acc d)))
-            "" dialogue)
+                (conj acc (dialogue->piece engine font (first d)))
+                (conj acc (dialogue->piece engine font d))))
+            [] dialogue)
 
-    :else (str dialogue)))
+    :else [(dialogue->piece engine font (str dialogue))]))
 
 (defn merge-two-dialogue [a b]
   (letfn [(ensure-vec [dialogue]
@@ -79,11 +91,21 @@
      :then
      (s-> session (o/insert esse-id {::play-progress (inc play-progress)}))]
 
+    ::break-dialogue
+    [:what
+     [:global ::text/engine engine]
+     [:global ::text/font font]
+     [esse-id ::dialogue dialogue]
+     :then
+     (let [dialogue-pieces (break-dialogues engine font dialogue)]
+       (s-> session
+            (o/insert esse-id {::dialogue-pieces dialogue-pieces})))]
+
     ::animate-dialogue
     [:what
      [::time/now ::tick tick]
      [esse-id ::player player]
-     [esse-id ::dialogue dialogue]
+     [esse-id ::dialogue-pieces dialogue-pieces]
      [esse-id ::dialogue-length dialogue-length]
      [esse-id ::dialogue-progress progress {:then false}]
      :then
@@ -92,26 +114,34 @@
             (o/insert esse-id ::dialogue-progress (inc progress))
             (o/insert :dialogue ::audio/play-tututu (< progress dialogue-length))))]}))
 
-(defn init-fn [world _game]
+(defn init-fn [world {:keys [::text/engine ::text/font]}]
   (-> world
-      (esse ::time/now {::tick 0 ::tick-progress 0})
-      (esse :one {::dialogue "hello jank!" ::dialogue-progress 0})))
+      (esse :global {::text/engine engine
+                     ::text/font font})
+      (esse ::time/now {::tick 0 ::tick-progress 0})))
 
 (defn render!
   [{world ::world/this :as game}]
-  (when-let [{:keys [player dialogue progress]} (query-one world ::animate-dialogue)]
-    (let [dialogue-str (dialogue->string dialogue)
-          dialogue     (subs dialogue-str 0 (min (max progress 0) (count dialogue-str)))
-          text         (cpp/unbox (:* cpp/TTF_Text) (::text/text game))]
+  (when-let [{:keys [player dialogue-pieces progress]} (query-one world ::animate-dialogue)]
+    (let [text     (cpp/unbox (:* cpp/TTF_Text) (::text/text game))]
       (doto text
         (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE)
 
         (cpp/TTF_SetTextString (-> player :name) 0)
-        (cpp/TTF_DrawRendererText 30.0 260.0)
-
-        (cpp/TTF_SetTextString dialogue 0)
-        (cpp/TTF_DrawRendererText 40.0 290.0))
-      :done)))
+        (cpp/TTF_DrawRendererText 30.0 260.0))
+      (loop [[piece & remains] dialogue-pieces
+             local-progress 0
+             local-width 0]
+        (when piece
+          (let [{:keys [TTF_Text dialogue length text-w]} piece
+                TTF_Text (cpp/unbox (:* cpp/TTF_Text) TTF_Text)
+                current  (- progress local-progress)
+                dialogue (subs dialogue 0 (min (max current 0) length))
+                x-pos    (+ 30.0 local-width)]
+            (doto TTF_Text
+              (cpp/TTF_SetTextString dialogue 0)
+              (cpp/TTF_DrawRendererText x-pos 290.0))
+            (recur remains length (+ local-width text-w))))))))
 
 (defn get-system []
   {::world/init-fn init-fn
@@ -133,8 +163,8 @@
              [:NA "This man is lying for dramatic effect"]]})
 
 (comment
-  (require '[bermain.engine.world-mutator :refer [inject-facts! debug-tap]]) 
- 
+  (require '[bermain.engine.world-mutator :refer [inject-facts! debug-tap]])
+
   (inject-facts!
    [::time/now {::tick-length 0.02
                 ::dialogue ""

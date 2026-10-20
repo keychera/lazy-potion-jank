@@ -52,11 +52,11 @@
        (cpp/SDL_SetRenderLogicalPresentation sdl-renderer logical-w logical-h cpp/SDL_LOGICAL_PRESENTATION_LETTERBOX))
 
      (loop [game (-> game
-                     (engine/init)
                      (image/init)
                      (text/init)
                      (audio/init)
                      (anime/init)
+                     (engine/init)
                      (assoc :player {:x 16.0 :y 16.0}))]
        (if-not (or (::end? game) (and stop-atom @stop-atom))
          (letfn [(render-clear [game]
