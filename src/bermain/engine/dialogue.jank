@@ -135,7 +135,8 @@
         (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE)
 
         (cpp/TTF_SetTextString (-> player :name) 0)
-        (cpp/TTF_DrawRendererText 30.0 260.0))
+        (cpp/TTF_DrawRendererText 24.0 260.0))
+      
       (loop [[piece & remains] dialogue-pieces
              local-progress 0
              local-width 0]
@@ -157,19 +158,23 @@
   {::world/init-fn init-fn
    ::world/rules rules})
 
+
 (def jank-play
   {:players {:NA {:name "NARRATOR"}
              :d  {:name "Dofida"}
              :nf {:name "Noifasui"}}
    :effects {:funky (fn []
                       (fn [{:keys [target time]}]
-                        (+ target (* 2 (cpp/sin (* 8.0 (float time)))))))}
+                        (+ target (* 2 (cpp/sin (* 8.0 (float time)))))))
+             :shake (fn []
+                      (fn [{:keys [target]}]
+                        (+ target (- (* 4 (rand)) 2))))}
    :scripts [[:d "oh."]
              [:d [" so this is " ["existence." :funky]] :+]
              [:d "for a language named jank,"]
              [:d "this doesn't feel janky at all."]
              [:nf "this is not jank"]
-             [:d "WHAT?" :camera-shake]
+             [:d [["WHAT?" :shake]] :camera-shake]
              [:d " What do you mean this is not jank?!" :+]
              [:nf "This is ClojureScript"]
              [:NA "This man is lying for dramatic effect"]]})
