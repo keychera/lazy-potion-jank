@@ -27,7 +27,7 @@
     (vector? dialogue)
     (reduce (fn dialouge-reducer [acc d]
               (if (vector? d)
-                (let [[dialogue effect-key] d 
+                (let [[dialogue effect-key] d
                       effect-fn ((get effects effect-key))]
                   (conj acc (assoc (dialogue->piece engine font dialogue)
                                    :effect-fn effect-fn)))
@@ -72,7 +72,7 @@
      (if (< tick-progress tick-length)
        (s-> session (o/insert esse-id ::tick-progress (+ tick-progress dt)))
        (s-> session (o/insert esse-id {::tick-progress 0
-                                        ::tick (inc tick)})))]
+                                       ::tick (inc tick)})))]
 
     ::dialogue-play
     [:what
@@ -125,18 +125,39 @@
             (o/insert esse-id ::dialogue-progress (inc progress))
             (o/insert esse-id ::audio/play-tututu (< progress dialogue-length))))]}))
 
+(defmacro assign [self member value]
+  `(-> ~self ~(symbol (str ".-" (name member))) (cpp/= ~value)))
+
 (defn render!
-  [{world ::world/this 
+  [{world ::world/this
     tt ::time/total
     :as game}]
   (when-let [{:keys [player dialogue-pieces progress]} (query-one world ::animate-dialogue)]
-    (let [text     (cpp/unbox (:* cpp/TTF_Text) (::text/text game))]
+    (let [text (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
+          sdl-renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
+          lines (#cpp (cpp/std.array cpp/SDL_FPoint 5))]
+      (doto (cpp/aget lines 0)
+        (assign :x 100)
+        (assign :y 60))
+      (doto (cpp/aget lines 1)
+        (assign :x 142)
+        (assign :y 60))
+      (doto (cpp/aget lines 2)
+        (assign :x 142)
+        (assign :y 82))
+      (doto (cpp/aget lines 3)
+        (assign :x 100)
+        (assign :y 82))
+      (doto (cpp/aget lines 4)
+        (assign :x 100)
+        (assign :y 60))
+      (cpp/SDL_RenderLines sdl-renderer (.data lines) 5)
       (doto text
         (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE)
 
         (cpp/TTF_SetTextString (-> player :name) 0)
         (cpp/TTF_DrawRendererText 24.0 260.0))
-      
+
       (loop [[piece & remains] dialogue-pieces
              local-progress 0
              local-width 0]
@@ -145,8 +166,9 @@
                 TTF_Text (cpp/unbox (:* cpp/TTF_Text) TTF_Text)
                 current  (- progress local-progress)
                 dialogue (subs dialogue 0 (min (max current 0) length))
+
                 x-pos    (+ 30.0 local-width)
-                y-pos    (if effect-fn 
+                y-pos    (if effect-fn
                            (effect-fn {:target 290.0 :time tt})
                            290.0)]
             (doto TTF_Text
@@ -184,10 +206,10 @@
 
   (inject-facts!
    [::global {::tick-length 0.02
-             ::dialogue ""
-             ::dialogue-progress 0
-             ::play jank-play
-             ::play-progress 1}])
+              ::dialogue ""
+              ::dialogue-progress 0
+              ::play jank-play
+              ::play-progress 1}])
 
   (inject-facts! [::global {::control ::next-dialogue}])
 
