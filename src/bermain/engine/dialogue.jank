@@ -135,7 +135,7 @@
   (when-let [{:keys [player dialogue-pieces progress]} (query-one world ::animate-dialogue)]
     (let [text (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
           sdl-renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
-          lines (#cpp (cpp/std.array cpp/SDL_FPoint 5))]
+          lines (#cpp (:array cpp/SDL_FPoint 5))]
       (doto (cpp/aget lines 0)
         (assign :x 100)
         (assign :y 60))
@@ -151,7 +151,7 @@
       (doto (cpp/aget lines 4)
         (assign :x 100)
         (assign :y 60))
-      (cpp/SDL_RenderLines sdl-renderer (.data lines) 5)
+      (cpp/SDL_RenderLines sdl-renderer lines 5)
       (doto text
         (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE)
 
