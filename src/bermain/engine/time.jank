@@ -2,19 +2,25 @@
   (:include
    "SDL3/SDL.h")
   (:require
-   [bermain.engine.utils :refer [s->]]
    [bermain.engine.world :as world]
    [odoyle.rules :as o]))
 
-(defn update-time [game]
-  (let [total (/ (cpp/SDL_GetTicks) 1000.0)
-        delta (- total (::total game 0))]
-    (-> (assoc game ::total total ::delta delta)
-        (update ::world/this o/insert ::now {::total total ::delta delta}))))
+(defn prepare [game]
+  (assoc game
+         ::one-second 0
+         ::frame-count 0))
 
-(defn init-fn [world _game]
-  (-> world
-      (o/insert ::now {::one-second 0 ::frame-count 0})))
+(defn update-time [{:keys [::one-second ::frame-count] :as game}]
+  (let [total (/ (cpp/SDL_GetTicks) 1000.0)
+        delta (- total (::total game 0))
+        game' (-> (assoc game ::total total ::delta delta)
+                  (update ::world/this o/insert ::now {::total total ::delta delta}))] 
+    (if (< one-second 1)
+      (-> game'
+          (assoc ::one-second (+ one-second delta) ::frame-count (inc frame-count)))
+      (-> game'
+          (assoc ::one-second 0 ::frame-count 0)
+          (update ::world/this o/insert ::now {::last-fps frame-count})))))
 
 (def rules
   (o/ruleset
@@ -23,24 +29,9 @@
      [::now ::total tt]
      [::now ::delta dt]]
 
-    ::debug-fps-counter
-    [:what
-     [::now ::delta dt]
-     [::now ::one-second one-second {:then false}]
-     [::now ::frame-count frame-count {:then false}]
-     :then
-     (if (< one-second 1)
-       (s-> session (o/insert ::now {::one-second (+ one-second dt)
-                                     ::frame-count (inc frame-count)}))
-       (s-> session (o/insert ::now {::last-fps frame-count
-                                     ::one-second 0
-                                     ::frame-count 0})))]
-
     ::debug-fps
     [:what
      [::now ::last-fps last-fps]]}))
 
 (defn get-system []
-  {::world/init-fn init-fn
-   ::world/rules rules})
-
+  {::world/rules rules})

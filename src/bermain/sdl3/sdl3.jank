@@ -52,6 +52,7 @@
        (cpp/SDL_SetRenderLogicalPresentation sdl-renderer logical-w logical-h cpp/SDL_LOGICAL_PRESENTATION_LETTERBOX))
 
      (loop [game (-> game
+                     (time/prepare)
                      (image/init)
                      (text/init)
                      (audio/init)
