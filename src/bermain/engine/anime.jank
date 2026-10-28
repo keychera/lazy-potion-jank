@@ -1,18 +1,26 @@
 (ns bermain.engine.anime
-  (:include "choreograph/Choreograph.h")
+  (:include
+   "choreograph/Choreograph.h")
   (:require
    [bermain.engine.time :as time]))
 
 (cpp/raw
- "template <typename T, typename... Args>
-  auto thenHold(choreograph::Sequence<T>& sequence,  Args&&... args) {
-      return sequence.template then<choreograph::Hold>(std::forward<Args>(args)...);
+ "using namespace choreograph;
+  
+  template <typename T, typename... Args>
+  auto thenHold(Sequence<T>& sequence,  Args&&... args) {
+      return sequence.template then<Hold>(std::forward<Args>(args)...);
   }
   
   template <typename T, typename... Args>
-  auto thenRampTo(choreograph::Sequence<T>& sequence,  Args&&... args) {
-      return sequence.template then<choreograph::RampTo>(std::forward<Args>(args)...);
-  }")
+  auto thenRampTo(Sequence<T>& sequence,  Args&&... args) {
+      return sequence.template then<RampTo>(std::forward<Args>(args)...);
+  }
+  
+  auto theanime = Sequence<int>(0).then<RampTo>(20, 50);")
+
+;; issue = if I instantiate this inside prepare, put it in cpp/box, assoc to keyword in game 
+;; it crash when cpp/unboxed cpp/*'ed and call its functiom 
 
 (def target-fps 12)
 (def frame-duration (/ 1.0 target-fps))
@@ -29,10 +37,10 @@
                  (mod timer' anime-duration)
                  timer')
         frame  (cpp/floor (/ timer' frame-duration))]
+    (tap> (.getValueWrapped cpp/theanime (::time/total game)))
     (assoc game ::timer timer' ::frame frame)))
 
-(defn clean! [_game]
-  )
+(defn clean! [_game])
 
 (comment
   (require '[bermain.engine.world-mutator :refer [debug-tap]])
