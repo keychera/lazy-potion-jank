@@ -2,6 +2,7 @@
   (:include
    "SDL3/SDL.h")
   (:require
+   [bermain.engine.utils :refer [s->]]
    [bermain.engine.world :as world]
    [odoyle.rules :as o]))
 
@@ -11,12 +12,35 @@
     (-> (assoc game ::total total ::delta delta)
         (update ::world/this o/insert ::now {::total total ::delta delta}))))
 
+(defn init-fn [world _game]
+  (-> world
+      (o/insert ::now {::one-second 0 ::frame-count 0})))
+
 (def rules
   (o/ruleset
    {::time
     [:what
      [::now ::total tt]
-     [::now ::delta dt]]}))
+     [::now ::delta dt]]
+
+    ::debug-fps-counter
+    [:what
+     [::now ::delta dt]
+     [::now ::one-second one-second {:then false}]
+     [::now ::frame-count frame-count {:then false}]
+     :then
+     (if (< one-second 1)
+       (s-> session (o/insert ::now {::one-second (+ one-second dt)
+                                     ::frame-count (inc frame-count)}))
+       (s-> session (o/insert ::now {::last-fps frame-count
+                                     ::one-second 0
+                                     ::frame-count 0})))]
+
+    ::debug-fps
+    [:what
+     [::now ::last-fps last-fps]]}))
 
 (defn get-system []
-  {::world/rules rules})
+  {::world/init-fn init-fn
+   ::world/rules rules})
+

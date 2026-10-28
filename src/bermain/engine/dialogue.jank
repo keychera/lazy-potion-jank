@@ -132,29 +132,35 @@
   [{world ::world/this
     tt ::time/total
     :as game}]
-  (when-let [{:keys [player dialogue-pieces progress]} (query-one world ::animate-dialogue)]
-    (let [text (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
-          sdl-renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
-          lines (#cpp (:array cpp/SDL_FPoint 5))]
-      (doto (cpp/aget lines 0)
-        (assign :x 100)
-        (assign :y 60))
-      (doto (cpp/aget lines 1)
-        (assign :x 142)
-        (assign :y 60))
-      (doto (cpp/aget lines 2)
-        (assign :x 142)
-        (assign :y 82))
-      (doto (cpp/aget lines 3)
-        (assign :x 100)
-        (assign :y 82))
-      (doto (cpp/aget lines 4)
-        (assign :x 100)
-        (assign :y 60))
-      (cpp/SDL_RenderLines sdl-renderer lines 5)
+  (let [text (cpp/unbox (:* cpp/TTF_Text) (::text/text game))
+        {:keys [last-fps]} (query-one world ::time/debug-fps)
+        sdl-renderer (cpp/unbox (:* cpp/SDL_Renderer) (:sdl-renderer game))
+        lines (#cpp (:array cpp/SDL_FPoint 5))]
+    (doto text
+      (cpp/TTF_SetTextColor 0 0 0 cpp/SDL_ALPHA_OPAQUE)
+      (cpp/TTF_SetTextString (str last-fps) 0)
+      (cpp/TTF_DrawRendererText 20.0 85.0))
+
+    (doto (cpp/aget lines 0)
+      (assign :x 100)
+      (assign :y 60))
+    (doto (cpp/aget lines 1)
+      (assign :x 142)
+      (assign :y 60))
+    (doto (cpp/aget lines 2)
+      (assign :x 142)
+      (assign :y 82))
+    (doto (cpp/aget lines 3)
+      (assign :x 100)
+      (assign :y 82))
+    (doto (cpp/aget lines 4)
+      (assign :x 100)
+      (assign :y 60))
+    (cpp/SDL_RenderLines sdl-renderer lines 5)
+    
+    (when-let [{:keys [player dialogue-pieces progress]} (query-one world ::animate-dialogue)]
       (doto text
         (cpp/TTF_SetTextColor 255 255 255 cpp/SDL_ALPHA_OPAQUE)
-
         (cpp/TTF_SetTextString (-> player :name) 0)
         (cpp/TTF_DrawRendererText 24.0 260.0))
 
