@@ -4,7 +4,7 @@
                        ".libs/SDL3_image-3.4.0/x86_64-w64-mingw32/include"
                        ".libs/SDL3_ttf-3.2.2/x86_64-w64-mingw32/include"
                        ".libs/SDL3_mixer-3.2.4/x86_64-w64-mingw32/include"
-                       "src-cpp"]
+                       "third-party/choreograph/src"]
         :library-dirs [".libs/SDL3-3.4.2/x86_64-w64-mingw32/bin"
                        ".libs/SDL3_image-3.4.0/x86_64-w64-mingw32/bin"
                        ".libs/SDL3_ttf-3.2.2/x86_64-w64-mingw32/bin"

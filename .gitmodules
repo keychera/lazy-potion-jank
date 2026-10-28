@@ -1,0 +1,3 @@
+[submodule "third-party/choreograph"]
+	path = third-party/choreograph
+	url = https://github.com/mardy/Choreograph

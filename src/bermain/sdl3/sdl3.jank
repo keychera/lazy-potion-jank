@@ -56,7 +56,7 @@
                      (image/init)
                      (text/init)
                      (audio/init)
-                     (anime/init)
+                     (anime/prepare)
                      (engine/init)
                      (assoc :player {:x 16.0 :y 16.0}))]
        (if-not (or (::end? game) (and stop-atom @stop-atom))
@@ -83,6 +83,7 @@
            (text/clean!)
            (image/clean!)
            (audio/clean!)
+           (anime/clean!)
            (error/clean!)
            (clean!)))))))
 

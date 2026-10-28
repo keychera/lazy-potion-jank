@@ -1,14 +1,25 @@
 (ns bermain.engine.anime
-  (:include "cmath")
+  (:include "choreograph/Choreograph.h")
   (:require
    [bermain.engine.time :as time]))
+
+(cpp/raw
+ "template <typename T, typename... Args>
+  auto thenHold(choreograph::Sequence<T>& sequence,  Args&&... args) {
+      return sequence.template then<choreograph::Hold>(std::forward<Args>(args)...);
+  }
+  
+  template <typename T, typename... Args>
+  auto thenRampTo(choreograph::Sequence<T>& sequence,  Args&&... args) {
+      return sequence.template then<choreograph::RampTo>(std::forward<Args>(args)...);
+  }")
 
 (def target-fps 12)
 (def frame-duration (/ 1.0 target-fps))
 (def frame-num 11)
 (def anime-duration (* frame-num frame-duration))
 
-(defn init [game]
+(defn prepare [game]
   (assoc game ::timer 0.0 ::frame 0))
 
 (defn advance [{:keys [::timer] :as game}]
@@ -20,3 +31,16 @@
         frame  (cpp/floor (/ timer' frame-duration))]
     (assoc game ::timer timer' ::frame frame)))
 
+(defn clean! [_game]
+  )
+
+(comment
+  (require '[bermain.engine.world-mutator :refer [debug-tap]])
+  debug-tap
+
+  (let [sequence (-> (#cpp (choreograph.Sequence int) 0)
+                     (cpp/thenHold 3 3)
+                     (cpp/thenRampTo 20 6400))]
+    (-> sequence (.getValueWrapped 6)))
+
+  :-)
