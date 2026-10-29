@@ -51,41 +51,20 @@
            logical-h 360]
        (cpp/SDL_SetRenderLogicalPresentation sdl-renderer logical-w logical-h cpp/SDL_LOGICAL_PRESENTATION_LETTERBOX))
 
-     (loop [game (-> game
-                     (time/prepare)
-                     (image/init)
-                     (text/init)
-                     (audio/init)
-                     (anime/prepare)
-                     (engine/init)
+     (loop [game (-> (time/prepare game) (image/init) (text/init) (audio/init) (anime/prepare) (engine/init)
                      (assoc :player {:x 16.0 :y 16.0}))]
        (if-not (or (::end? game) (and stop-atom @stop-atom))
-         (letfn [(render-clear [game]
-                   (cpp/SDL_SetRenderDrawColor sdl-renderer 25 25 32 255)
-                   (cpp/SDL_RenderClear sdl-renderer)
-                   game)
-                 (render-present [game]
-                   (cpp/SDL_RenderPresent sdl-renderer)
-                   game)]
-           (recur (-> (poll-events game)
-                      (time/update-time)
-                      (anime/advance)
+         (let [game (-> (poll-events game) (time/update-time) (anime/advance) (engine/tick) (route-inputs) (audio/render))]
+           (cpp/SDL_SetRenderDrawColor sdl-renderer 25 25 32 255)
+           (cpp/SDL_RenderClear sdl-renderer)
 
-                      (engine/tick)
-                      (route-inputs)
-                      (audio/render)
+           (image/render! game)
+           (dialogue/render! game)
 
-                      (render-clear)
-                      (doto (image/render!))
-                      (doto (dialogue/render!))
-                      (render-present))))
+           (cpp/SDL_RenderPresent sdl-renderer)
+           (recur game))
          (doto game
-           (text/clean!)
-           (image/clean!)
-           (audio/clean!)
-           (anime/clean!)
-           (error/clean!)
-           (clean!)))))))
+           (text/clean!) (image/clean!) (audio/clean!) (anime/clean!) (error/clean!) (clean!)))))))
 
 (defn poll-events [game]
   (let [event (cpp/SDL_Event)]
