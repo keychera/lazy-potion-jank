@@ -31,7 +31,8 @@
         player     (:player game)
         frame      (::anime/frame game)
         src-rect   (cpp/SDL_FRect (* frame 66.0) 0.0 66.0 67.0)
-        dst-rest   (cpp/SDL_FRect (:x player) (:y player) 64.0 64.0)]
+        animeval   (::anime/animeval game 0.0)
+        dst-rest   (cpp/SDL_FRect (+ (:x player) animeval) (:y player) 64.0 64.0)]
     (render-9-panel! game)
     (cpp/SDL_RenderTexture renderer potion-tex (cpp/& src-rect) (cpp/& dst-rest))))
 

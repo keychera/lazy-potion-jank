@@ -1,6 +1,7 @@
 (ns bermain.engine.anime
   (:include
-   "choreograph/Choreograph.h")
+   "choreograph/Choreograph.h"
+   "choreograph/Easing.h")
   (:require
    [bermain.engine.time :as time]))
 
@@ -28,10 +29,10 @@
 (def anime-duration (* frame-num frame-duration))
 
 (defn prepare [game]
-  (let [theanime (cpp/new (choreograph.Sequence int) 0)]
+  (let [theanime (cpp/new (choreograph.Sequence float) 0.0)]
     (doto (cpp/* theanime)
-      (cpp/thenRampTo 20 10)
-      (cpp/thenHold 99 10))
+      (cpp/thenRampTo 20.0 4.0 (cpp/choreograph.EaseInOutQuad))
+      (cpp/thenRampTo 0.0 4.0 (cpp/choreograph.EaseInOutQuad)))
     (assoc game
            ::timer 0.0 ::frame 0
            ::theanime (cpp/box theanime))))
@@ -42,10 +43,13 @@
         timer' (if (> timer' anime-duration)
                  (mod timer' anime-duration)
                  timer')
-        theanime (cpp/unbox (:* (choreograph.Sequence int)) (::theanime game))
-        frame (cpp/floor (/ timer' frame-duration))]
-    (tap> [(::time/total game) (.getValueWrapped (cpp/* theanime) (::time/total game))])
-    (assoc game ::timer timer' ::frame frame)))
+        theanime (cpp/unbox (:* (choreograph.Sequence float)) (::theanime game))
+        frame (cpp/floor (/ timer' frame-duration))
+        animeval (.getValueWrapped (cpp/* theanime) (::time/total game))]
+    (tap> [(::time/total game) animeval])
+    (assoc game
+           ::timer timer' ::frame frame
+           ::animeval animeval)))
 
 (defn clean! [_game])
 
