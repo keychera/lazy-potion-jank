@@ -8,16 +8,16 @@
  "using namespace choreograph;
   
   template <typename T, typename... Args>
-  auto thenHold(Sequence<T>& sequence,  Args&&... args) {
-      return sequence.template then<Hold>(std::forward<Args>(args)...);
+  void thenHold(Sequence<T>& sequence, Args&&... args) {
+      sequence.template then<Hold>(std::forward<Args>(args)...);
   }
   
   template <typename T, typename... Args>
-  auto thenRampTo(Sequence<T>& sequence,  Args&&... args) {
-      return sequence.template then<RampTo>(std::forward<Args>(args)...);
+  void thenRampTo(Sequence<T>& sequence, Args&&... args) {
+      sequence.template then<RampTo>(std::forward<Args>(args)...);
   }
   
-  auto theanime = Sequence<int>(0).then<RampTo>(20, 50);")
+  using CSI = Sequence<int>;")
 
 ;; issue = if I instantiate this inside prepare, put it in cpp/box, assoc to keyword in game 
 ;; it crash when cpp/unboxed cpp/*'ed and call its functiom 
@@ -28,7 +28,13 @@
 (def anime-duration (* frame-num frame-duration))
 
 (defn prepare [game]
-  (assoc game ::timer 0.0 ::frame 0))
+  (let [theanime (cpp/new (choreograph.Sequence int) 0)]
+    (doto (cpp/* theanime)
+      (cpp/thenRampTo 20 10)
+      (cpp/thenHold 99 10))
+    (assoc game
+           ::timer 0.0 ::frame 0
+           ::theanime (cpp/box theanime))))
 
 (defn advance [{:keys [::timer] :as game}]
   (let [delta  (::time/delta game)
@@ -36,19 +42,31 @@
         timer' (if (> timer' anime-duration)
                  (mod timer' anime-duration)
                  timer')
-        frame  (cpp/floor (/ timer' frame-duration))]
-    (tap> (.getValueWrapped cpp/theanime (::time/total game)))
+        theanime (cpp/unbox (:* (choreograph.Sequence int)) (::theanime game))
+        frame (cpp/floor (/ timer' frame-duration))]
+    (tap> [(::time/total game) (.getValueWrapped (cpp/* theanime) (::time/total game))])
     (assoc game ::timer timer' ::frame frame)))
 
 (defn clean! [_game])
 
 (comment
-  (require '[bermain.engine.world-mutator :refer [debug-tap]])
+  (require '[bermain.engine.world-mutator :refer [debug-tap]]
+           'jank.compiler)
   debug-tap
 
   (let [sequence (-> (#cpp (choreograph.Sequence int) 0)
-                     (cpp/thenHold 3 3)
-                     (cpp/thenRampTo 20 6400))]
-    (-> sequence (.getValueWrapped 6)))
+                     (cpp/thenHold 20 10)
+                     (cpp/thenRampTo 99 10))]
+    (-> sequence (.getValueWrapped 12)))
+
+  (jank.compiler/native-source
+   '(let [theanime (cpp/new (choreograph.Sequence int) 0)]
+      (#cpp (CSI.then choreograph.RampTo) (cpp/* theanime) 20 50)))
+
+  (jank.compiler/native-source
+   '(let [theanime (cpp/new (choreograph.Sequence int) 0)]
+      (-> (cpp/* theanime)
+          (cpp/thenRampTo 20 10)
+          (cpp/thenHold 99 10))))
 
   :-)
